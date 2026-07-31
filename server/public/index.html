@@ -419,7 +419,6 @@
       setTimeout(() => playBeep(880, 'sine', 0.2), 60);
       setTimeout(() => playBeep(1174.66, 'triangle', 0.25), 120);
 
-      // Trigger screen shake & neon flash FX
       const body = document.getElementById('bodyContainer');
       body.classList.add('screen-shake');
       setTimeout(() => body.classList.remove('screen-shake'), 250);
@@ -442,6 +441,7 @@
     let mode = 'SIGN_IN';
     let selectedAvatar = '⚡';
     let recentPresses = [];
+    let currentMatchId = null;
 
     let config = { timerDurationSec: 30, cooldownMs: 2000, minPlayers: 2 };
     let gameState = {
@@ -482,7 +482,12 @@
     const ruleLength = document.getElementById('ruleLength');
     const ruleNumber = document.getElementById('ruleNumber');
 
-    // AVATAR SELECTION LISTENERS
+    // Helper: Determine if this client is the designated Host Referee
+    function isHostReferee() {
+      const playerIds = Object.keys(gameState.players).sort();
+      return playerIds.length > 0 && playerIds[0] === currentUser?.id;
+    }
+
     document.querySelectorAll('.avatar-opt').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.avatar-opt').forEach(b => b.className = 'avatar-opt text-2xl p-2 rounded-lg bg-black/40 hover:bg-purple-600/30');
@@ -641,14 +646,22 @@
           updateUI();
         })
         .on('broadcast', { event: 'steal_crown' }, ({ payload }) => {
+          // Reject steals if match is not actively PLAYING or if payload is for an old match
+          if (gameState.status !== 'PLAYING') return;
+          if (payload.matchId && payload.matchId !== currentMatchId) return;
+
           gameState.leaderId = payload.userId;
           gameState.leaderName = payload.userName;
           gameState.leaderAvatar = payload.userAvatar || '👑';
-          gameState.timerValue = config.timerDurationSec;
           
           addActivityFeedLog(payload.userName, payload.userAvatar, payload.timeStr);
           playStealSound();
           updateUI();
+        })
+        .on('broadcast', { event: 'match_ended' }, ({ payload }) => {
+          // SINGLE AUTHORITATIVE WINNER BROADCAST RECEIVER
+          if (gameState.status === 'WINNER_REVEALED') return;
+          triggerWinnerReveal(payload.winnerId, payload.winnerName, payload.winnerAvatar);
         })
         .on('broadcast', { event: 'config_update' }, ({ payload }) => {
           config = { ...config, ...payload };
@@ -693,6 +706,7 @@
         return;
       }
 
+      currentMatchId = 'match_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       gameState.status = 'PLAYING';
       gameState.timerValue = config.timerDurationSec;
       gameState.leaderId = null;
@@ -705,8 +719,24 @@
       gameLoopInterval = setInterval(() => {
         if (gameState.status === 'PLAYING') {
           gameState.timerValue--;
+          
+          // HOST REFEREE RESPONSIBILITY: Broadcast match_ended when clock hits 0
           if (gameState.timerValue <= 0) {
-            endCloudMatch();
+            if (isHostReferee()) {
+              if (channel) {
+                channel.send({
+                  type: 'broadcast',
+                  event: 'match_ended',
+                  payload: {
+                    winnerId: gameState.leaderId,
+                    winnerName: gameState.leaderName,
+                    winnerAvatar: gameState.leaderAvatar,
+                    matchId: currentMatchId
+                  }
+                });
+              }
+              triggerWinnerReveal(gameState.leaderId, gameState.leaderName, gameState.leaderAvatar);
+            }
           } else {
             updateUI();
           }
@@ -715,13 +745,12 @@
       updateUI();
     }
 
-    async function endCloudMatch() {
+    async function triggerWinnerReveal(winnerId, winnerName, winnerAvatar) {
       clearInterval(gameLoopInterval);
       gameState.status = 'WINNER_REVEALED';
-      const winnerId = gameState.leaderId;
-      const isWinner = winnerId === currentUser.id;
+      const isWinner = winnerId && winnerId === currentUser?.id;
 
-      if (winnerId && gameState.leaderName) {
+      if (winnerId && winnerName) {
         try {
           await supabaseClient.rpc('increment_wins', { user_id: winnerId }).catch(() => {});
         } catch (e) {}
@@ -735,8 +764,8 @@
           setTimeout(() => confetti({ particleCount: 100, angle: 60, spread: 55, origin: { x: 0 } }), 250);
           setTimeout(() => confetti({ particleCount: 100, angle: 120, spread: 55, origin: { x: 1 } }), 400);
         }
-      } else if (gameState.leaderName) {
-        document.getElementById('winnerText').innerText = (gameState.leaderAvatar || '👑') + ' ' + gameState.leaderName + ' WINS!';
+      } else if (winnerName) {
+        document.getElementById('winnerText').innerText = (winnerAvatar || '👑') + ' ' + winnerName + ' WINS!';
       } else {
         document.getElementById('winnerText').innerText = 'NOBODY WON';
       }
@@ -873,7 +902,7 @@
     }
 
     document.getElementById('actionBtn').addEventListener('click', async () => {
-      if (Date.now() < cooldownUntil) return;
+      if (Date.now() < cooldownUntil || gameState.status !== 'PLAYING' || gameState.timerValue <= 0) return;
 
       const userName = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'Player';
       const userAvatar = selectedAvatar || '⚡';
@@ -882,7 +911,6 @@
       gameState.leaderId = currentUser.id;
       gameState.leaderName = userName;
       gameState.leaderAvatar = userAvatar;
-      gameState.timerValue = config.timerDurationSec;
 
       addActivityFeedLog(userName, userAvatar, timeStr);
 
@@ -890,7 +918,7 @@
         channel.send({
           type: 'broadcast',
           event: 'steal_crown',
-          payload: { userId: currentUser.id, userName, userAvatar, timeStr }
+          payload: { userId: currentUser.id, userName, userAvatar, timeStr, matchId: currentMatchId }
         });
       }
 
