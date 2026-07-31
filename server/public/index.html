@@ -26,6 +26,7 @@
     }
     .glow-red { box-shadow: 0 0 70px rgba(239, 68, 68, 0.6); }
     .glow-gold { box-shadow: 0 0 80px rgba(245, 158, 11, 0.7); }
+    .glow-blue { box-shadow: 0 0 70px rgba(59, 130, 246, 0.7); }
     .glow-neon { box-shadow: 0 0 50px rgba(168, 85, 247, 0.5); }
     
     .glass {
@@ -53,10 +54,10 @@
 
     @keyframes shake {
       0%, 100% { transform: translate(0, 0); }
-      20% { transform: translate(-4px, 4px); }
-      40% { transform: translate(4px, -4px); }
-      60% { transform: translate(-4px, -2px); }
-      80% { transform: translate(2px, 2px); }
+      20% { transform: translate(-5px, 5px); }
+      40% { transform: translate(5px, -5px); }
+      60% { transform: translate(-5px, -3px); }
+      80% { transform: translate(3px, 3px); }
     }
     .screen-shake { animation: shake 0.25s ease-in-out; }
   </style>
@@ -210,28 +211,55 @@
       </div>
     </div>
 
-    <!-- GAMEPLAY SCREEN WITH LIVE PRESS ACTIVITY FEED -->
+    <!-- GAMEPLAY SCREEN WITH LIVE PERKS ARSENAL -->
     <div id="screenGame" class="w-full flex flex-col items-center hidden">
       
       <!-- LIVE ACTIVITY FEED: RECENT PRESSES -->
-      <div class="w-full glass rounded-2xl p-3 mb-6 flex flex-col items-center text-xs">
+      <div class="w-full glass rounded-2xl p-3 mb-4 flex flex-col items-center text-xs">
         <div class="flex items-center gap-1.5 text-amber-400 font-black uppercase tracking-wider mb-2">
           <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
           <span>⚡ LIVE ACTION FEED</span>
         </div>
-        <div id="activityFeed" class="w-full space-y-1.5 max-h-24 overflow-y-auto font-mono text-[11px]">
+        <div id="activityFeed" class="w-full space-y-1.5 max-h-20 overflow-y-auto font-mono text-[11px]">
           <p class="text-gray-500 text-center py-1">Waiting for first crown steal...</p>
         </div>
       </div>
 
       <!-- TIMER CIRCLE WITH GLOW -->
-      <div id="timerContainer" class="w-64 h-64 rounded-full border-8 border-purple-500/50 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-8 transition-all duration-300 glow-neon">
-        <span id="timerText" class="text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-300">30</span>
+      <div id="timerContainer" class="w-56 h-56 rounded-full border-8 border-purple-500/50 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-6 transition-all duration-300 glow-neon">
+        <span id="timerText" class="text-6xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-300">30</span>
         <span class="text-xs text-purple-300 font-extrabold tracking-widest mt-1">SECONDS REMAINING</span>
       </div>
 
+      <!-- HERO PERKS ARSENAL BUTTONS -->
+      <div class="w-full grid grid-cols-2 gap-3 mb-4">
+        <!-- CROWN SHIELD PERK -->
+        <button id="shieldPerkBtn" class="bg-blue-600/30 hover:bg-blue-600/50 border border-blue-400/50 rounded-2xl p-3 flex items-center justify-between transition active:scale-95 shadow-lg">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">🛡️</span>
+            <div class="text-left">
+              <span class="text-xs font-black text-blue-300 block">Crown Shield</span>
+              <span class="text-[10px] text-gray-300 font-semibold">3s Guard</span>
+            </div>
+          </div>
+          <span class="text-xs bg-blue-500 text-white font-black px-2 py-1 rounded-lg">ACTIVATE</span>
+        </button>
+
+        <!-- SHIELD BREAKER PERK -->
+        <button id="breakerPerkBtn" class="bg-red-600/30 hover:bg-red-600/50 border border-red-400/50 rounded-2xl p-3 flex items-center justify-between transition active:scale-95 shadow-lg">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">🔨</span>
+            <div class="text-left">
+              <span class="text-xs font-black text-red-300 block">Shield Breaker</span>
+              <span class="text-[10px] text-gray-300 font-semibold">Smash Shield</span>
+            </div>
+          </div>
+          <span class="text-xs bg-red-500 text-white font-black px-2 py-1 rounded-lg">SMASH</span>
+        </button>
+      </div>
+
       <!-- GIANT TAKE CROWN BUTTON -->
-      <button id="actionBtn" class="w-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 hover:from-red-500 hover:to-yellow-300 text-black h-24 rounded-3xl font-black text-3xl tracking-wider shadow-2xl transition active:scale-95 glow-gold">
+      <button id="actionBtn" class="w-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 hover:from-red-500 hover:to-yellow-300 text-black h-20 rounded-3xl font-black text-3xl tracking-wider shadow-2xl transition active:scale-95 glow-gold">
         👑 TAKE CROWN!
       </button>
     </div>
@@ -424,6 +452,21 @@
       setTimeout(() => body.classList.remove('screen-shake'), 250);
     }
 
+    function playSmashSound() {
+      playBeep(150, 'sawtooth', 0.15);
+      setTimeout(() => playBeep(300, 'square', 0.1), 50);
+      setTimeout(() => playBeep(900, 'sine', 0.3), 120);
+
+      const body = document.getElementById('bodyContainer');
+      body.classList.add('screen-shake');
+      setTimeout(() => body.classList.remove('screen-shake'), 300);
+    }
+
+    function playShieldSound() {
+      playBeep(440, 'sine', 0.1);
+      setTimeout(() => playBeep(659.25, 'sine', 0.25), 80);
+    }
+
     function playWinSound() {
       playBeep(523.25, 'square', 0.15);
       setTimeout(() => playBeep(659.25, 'square', 0.15), 100);
@@ -448,6 +491,8 @@
       leaderId: null,
       leaderName: null,
       leaderAvatar: '👑',
+      isShieldActive: false,
+      shieldExpiresAt: null,
       endsAt: null,
       timerValue: 30,
       players: {}
@@ -582,7 +627,6 @@
           document.getElementById('adminMinPlayersInput').value = config.minPlayers;
         }
 
-        // Fetch current active_match row from PostgreSQL
         const { data: matchData } = await supabaseClient
           .from('active_match')
           .select('*')
@@ -604,6 +648,10 @@
       gameState.leaderName = row.leader_name;
       gameState.leaderAvatar = row.leader_avatar || '👑';
       gameState.endsAt = row.ends_at;
+
+      const isShieldActive = row.is_shield_active && row.shield_expires_at && (new Date(row.shield_expires_at) > new Date());
+      gameState.isShieldActive = isShieldActive;
+      gameState.shieldExpiresAt = row.shield_expires_at;
 
       if (row.ends_at && gameState.status === 'PLAYING') {
         const remaining = Math.max(0, Math.ceil((new Date(row.ends_at) - new Date()) / 1000));
@@ -648,7 +696,6 @@
         config: { presence: { key: currentUser.id } }
       });
 
-      // LISTEN TO POSTGRESQL DB CHANGES FOR SINGLE SOURCE OF TRUTH!
       supabaseClient
         .channel('active_match_db_changes')
         .on(
@@ -657,11 +704,20 @@
           (payload) => {
             if (payload.new) {
               const oldLeader = gameState.leaderId;
+              const wasShield = gameState.isShieldActive;
               syncStateFromDB(payload.new);
 
-              if (payload.new.leader_name && payload.new.leader_id !== oldLeader) {
-                addActivityFeedLog(payload.new.leader_name, payload.new.leader_avatar);
-                playStealSound();
+              if (payload.new.is_shield_active && !wasShield) {
+                addPerkLog(`🛡️ ${payload.new.leader_name} ACTIVATED CROWN SHIELD!`);
+                playShieldSound();
+              } else if (payload.new.leader_name && payload.new.leader_id !== oldLeader) {
+                if (wasShield) {
+                  addPerkLog(`🔨 ${payload.new.leader_name} SMASHED THE SHIELD & STOLE CROWN!`);
+                  playSmashSound();
+                } else {
+                  addActivityFeedLog(payload.new.leader_name, payload.new.leader_avatar);
+                  playStealSound();
+                }
               }
             }
           }
@@ -696,6 +752,18 @@
             });
           }
         });
+    }
+
+    function addPerkLog(msg) {
+      const feedElem = document.getElementById('activityFeed');
+      if (feedElem) {
+        feedElem.insertAdjacentHTML('afterbegin', `
+          <div class="flex justify-between items-center bg-blue-900/60 px-3 py-1.5 rounded-lg border border-blue-400/50 text-blue-200 font-black">
+            <span>${msg}</span>
+            <span class="text-[10px] text-blue-300 font-mono">NOW</span>
+          </div>
+        `);
+      }
     }
 
     function addActivityFeedLog(userName, userAvatar, timeStr) {
@@ -846,10 +914,12 @@
       const playerCount = players.length;
       const isLeader = gameState.leaderId === currentUser?.id;
 
+      const shieldBadge = gameState.isShieldActive ? ' <span class="text-blue-400 font-extrabold animate-pulse">🛡️ SHIELD ACTIVE!</span>' : '';
+
       if (gameState.leaderName) {
         document.getElementById('leaderName').innerHTML = isLeader 
-          ? '<span>YOU HOLD THE CROWN 👑</span>' 
-          : `<span class="text-amber-400">👑 ${gameState.leaderAvatar || ''} ${gameState.leaderName.toUpperCase()}</span>`;
+          ? `<span>YOU HOLD THE CROWN 👑</span>${shieldBadge}` 
+          : `<span class="text-amber-400">👑 ${gameState.leaderAvatar || ''} ${gameState.leaderName.toUpperCase()}</span>${shieldBadge}`;
       } else {
         document.getElementById('leaderName').innerText = 'NO LEADER';
       }
@@ -878,41 +948,86 @@
       const timerContainer = document.getElementById('timerContainer');
       timerText.innerText = gameState.timerValue;
 
-      if (gameState.timerValue <= 5) {
-        timerContainer.classList.add('animate-danger', 'border-red-500', 'glow-red');
+      if (gameState.isShieldActive) {
+        timerContainer.className = 'w-56 h-56 rounded-full border-8 border-blue-500 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-6 transition-all duration-300 glow-blue';
+      } else if (gameState.timerValue <= 5) {
+        timerContainer.className = 'w-56 h-56 rounded-full border-8 border-red-500 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-6 transition-all duration-300 animate-danger glow-red';
         timerText.classList.add('text-red-500');
         if (gameState.status === 'PLAYING') playBeep(440, 'sine', 0.05);
       } else {
-        timerContainer.classList.remove('animate-danger', 'border-red-500', 'glow-red');
+        timerContainer.className = 'w-56 h-56 rounded-full border-8 border-purple-500/50 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-6 transition-all duration-300 glow-neon';
         timerText.classList.remove('text-red-500');
       }
 
       const actionBtn = document.getElementById('actionBtn');
+      const shieldBtn = document.getElementById('shieldPerkBtn');
+
+      // Enable Shield button ONLY if current player holds the crown!
+      if (isLeader && !gameState.isShieldActive) {
+        shieldBtn.disabled = false;
+        shieldBtn.className = 'bg-blue-600/40 hover:bg-blue-600/60 border border-blue-400 rounded-2xl p-3 flex items-center justify-between transition active:scale-95 shadow-lg opacity-100';
+      } else {
+        shieldBtn.disabled = true;
+        shieldBtn.className = 'bg-gray-800/40 border border-gray-700 rounded-2xl p-3 flex items-center justify-between transition opacity-40 cursor-not-allowed';
+      }
+
       if (isLeader) {
-        actionBtn.innerText = 'YOU ARE LEADING 👑';
-        actionBtn.className = 'w-full bg-gradient-to-r from-amber-500 to-yellow-400 font-black text-3xl tracking-wider py-6 rounded-3xl shadow-2xl glow-gold text-black';
+        actionBtn.innerText = gameState.isShieldActive ? 'PROTECTED BY SHIELD 🛡️' : 'YOU ARE LEADING 👑';
+        actionBtn.className = 'w-full bg-gradient-to-r from-amber-500 to-yellow-400 font-black text-2xl tracking-wider h-20 rounded-3xl shadow-2xl glow-gold text-black';
       } else if (Date.now() < cooldownUntil) {
         // Cooldown active
       } else {
         actionBtn.innerText = '👑 TAKE CROWN!';
         actionBtn.disabled = false;
-        actionBtn.className = 'w-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 hover:from-red-500 hover:to-yellow-300 text-black h-24 rounded-3xl font-black text-3xl tracking-wider shadow-2xl transition active:scale-95 glow-gold';
+        actionBtn.className = 'w-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 hover:from-red-500 hover:to-yellow-300 text-black h-20 rounded-3xl font-black text-3xl tracking-wider shadow-2xl transition active:scale-95 glow-gold';
       }
     }
 
-    // ATOMIC DB TRANSACTION RPC CALL FOR STEALING CROWN
+    // SHIELD PERK ACTIVATION
+    document.getElementById('shieldPerkBtn').addEventListener('click', async () => {
+      if (gameState.leaderId !== currentUser?.id) return;
+      try {
+        await supabaseClient.rpc('activate_shield', { p_user_id: currentUser.id });
+        playShieldSound();
+      } catch (e) {}
+    });
+
+    // SHIELD BREAKER PERK ACTIVATION (SMASH SHIELD & STEAL)
+    document.getElementById('breakerPerkBtn').addEventListener('click', async () => {
+      if (Date.now() < cooldownUntil || gameState.status !== 'PLAYING') return;
+
+      const userName = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'Player';
+      const userAvatar = selectedAvatar || '⚡';
+
+      try {
+        await supabaseClient.rpc('steal_crown', {
+          p_user_id: currentUser.id,
+          p_user_name: userName,
+          p_user_avatar: userAvatar,
+          p_is_breaker: true
+        });
+        playSmashSound();
+      } catch (err) {
+        console.warn('[Postgres RPC] Breaker error:', err);
+      }
+
+      cooldownUntil = Date.now() + config.cooldownMs;
+      updateUI();
+    });
+
+    // STANDARD CROWN STEAL
     document.getElementById('actionBtn').addEventListener('click', async () => {
       if (Date.now() < cooldownUntil || gameState.status !== 'PLAYING') return;
 
       const userName = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'Player';
       const userAvatar = selectedAvatar || '⚡';
 
-      // Atomic PostgreSQL DB Stored Procedure Call
       try {
         await supabaseClient.rpc('steal_crown', {
           p_user_id: currentUser.id,
           p_user_name: userName,
-          p_user_avatar: userAvatar
+          p_user_avatar: userAvatar,
+          p_is_breaker: false
         });
       } catch (err) {
         console.warn('[Postgres RPC] steal_crown error:', err);
@@ -921,7 +1036,7 @@
       cooldownUntil = Date.now() + config.cooldownMs;
       const actionBtn = document.getElementById('actionBtn');
       actionBtn.disabled = true;
-      actionBtn.className = 'w-full bg-gray-800 text-gray-500 font-black text-xl tracking-wider py-6 rounded-3xl cursor-not-allowed';
+      actionBtn.className = 'w-full bg-gray-800 text-gray-500 font-black text-xl tracking-wider h-20 rounded-3xl cursor-not-allowed';
 
       clearInterval(cooldownTimer);
       cooldownTimer = setInterval(() => {
