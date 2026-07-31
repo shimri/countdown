@@ -53,15 +53,18 @@
         <div id="userBadge" class="hidden text-xs bg-black/50 border border-gray-800 px-3 py-1.5 rounded-full flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span id="userBadgeName" class="font-bold text-gray-300"></span>
+          <button id="editNicknameBtn" title="Edit Nickname" class="text-amber-400 hover:text-amber-300 font-bold ml-1 text-xs">✏️</button>
           <button id="logoutBtn" class="text-gray-500 hover:text-red-400 ml-1 text-xs font-semibold">Exit</button>
         </div>
       </div>
     </div>
 
-    <!-- CROWN HOLDER DISPLAY -->
-    <div id="leaderBanner" class="glass rounded-2xl py-3.5 px-6 shadow-2xl transition-all duration-300">
-      <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Current Crown Holder</p>
-      <p id="leaderName" class="text-xl font-extrabold text-amber-400 mt-0.5 tracking-wide">NO LEADER</p>
+    <!-- CURRENT CROWN HOLDER DISPLAY -->
+    <div id="leaderBanner" class="glass rounded-2xl py-3.5 px-6 shadow-2xl transition-all duration-300 relative overflow-hidden">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Current Crown Leader</p>
+      <p id="leaderName" class="text-2xl font-black text-amber-400 mt-0.5 tracking-wide flex items-center justify-center gap-2">
+        <span>NO LEADER</span>
+      </p>
     </div>
   </header>
 
@@ -71,7 +74,7 @@
     <!-- AUTHENTICATION SCREEN -->
     <div id="screenAuth" class="w-full glass rounded-3xl p-8 flex flex-col items-center shadow-2xl">
       <h2 class="text-2xl font-bold mb-1">Enter Cloud Arena</h2>
-      <p class="text-gray-400 text-xs mb-6 text-center">Sign in or register to play 100% Cloud Multiplayer on Supabase.</p>
+      <p class="text-gray-400 text-xs mb-6 text-center">Sign in or register with your custom nickname to play on Supabase.</p>
 
       <div class="w-full grid grid-cols-2 bg-black/40 p-1 rounded-xl mb-6 text-xs font-bold text-center">
         <button id="tabSignIn" class="py-2.5 rounded-lg bg-red-600 text-white shadow">SIGN IN</button>
@@ -79,8 +82,8 @@
       </div>
 
       <div id="authForm" class="w-full flex flex-col items-center">
-        <div id="usernameWrapper" class="w-full hidden">
-          <input type="text" id="usernameInput" placeholder="Choose a Username" maxlength="12"
+        <div id="usernameWrapper" class="w-full">
+          <input type="text" id="usernameInput" placeholder="Choose Display Nickname" maxlength="15"
             class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold focus:outline-none focus:border-red-500 transition mb-3 text-white">
         </div>
 
@@ -133,11 +136,10 @@
       <p id="lobbyStatusText" class="text-sm text-gray-400 mb-6">Waiting for players to join Cloud Lobby...</p>
 
       <div class="w-full border-t border-gray-800 pt-4 mb-4">
-        <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Live Cloud Players</p>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Live Players in Lobby</p>
         <ul id="playerList" class="space-y-2 text-sm text-center"></ul>
       </div>
 
-      <!-- ADMOB BANNER SLOT -->
       <div class="w-full border-t border-gray-800/80 pt-3 flex flex-col items-center">
         <span class="text-[10px] text-gray-500 font-semibold tracking-widest mb-1">SPONSORED ADMOB AD</span>
         <div class="w-full h-14 bg-black/40 border border-gray-800 rounded-xl flex items-center justify-center text-xs text-amber-400/80 font-mono">
@@ -146,8 +148,20 @@
       </div>
     </div>
 
-    <!-- GAMEPLAY SCREEN -->
+    <!-- GAMEPLAY SCREEN WITH LIVE PRESS ACTIVITY FEED -->
     <div id="screenGame" class="w-full flex flex-col items-center hidden">
+      
+      <!-- LIVE ACTIVITY FEED: RECENT PRESSES -->
+      <div class="w-full glass rounded-2xl p-3 mb-6 flex flex-col items-center text-xs">
+        <div class="flex items-center gap-1.5 text-gray-400 font-bold uppercase tracking-wider mb-2">
+          <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+          <span>Live Action Activity</span>
+        </div>
+        <div id="activityFeed" class="w-full space-y-1.5 max-h-24 overflow-y-auto font-mono text-[11px]">
+          <p class="text-gray-500 text-center py-1">Waiting for first crown steal...</p>
+        </div>
+      </div>
+
       <div id="timerContainer" class="w-64 h-64 rounded-full border-8 border-gray-800 bg-black/70 flex flex-col items-center justify-center shadow-2xl relative mb-10 transition-all duration-300">
         <span id="timerText" class="text-7xl font-black tracking-tighter">30</span>
         <span class="text-xs text-gray-500 tracking-widest font-semibold mt-1">SECONDS</span>
@@ -188,6 +202,21 @@
     <span>100% Supabase Cloud Engine</span>
     <button id="leaderboardBtn" class="text-amber-400 hover:underline font-semibold">🏆 Leaderboard</button>
   </footer>
+
+  <!-- NICKNAME EDIT MODAL -->
+  <div id="nicknameModal" class="fixed inset-0 bg-black/85 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+    <div class="glass border-amber-500/40 w-full max-w-sm rounded-3xl p-6 relative shadow-2xl">
+      <button id="closeNicknameModal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+      <h3 class="text-lg font-black text-amber-400 mb-4 flex items-center gap-2">
+        ✏️ Edit Your Nickname
+      </h3>
+      <input type="text" id="editNicknameInput" placeholder="New Display Nickname" maxlength="15"
+        class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-400 mb-4 text-white">
+      <button id="saveNicknameBtn" class="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black py-3 rounded-xl shadow-lg hover:from-amber-400 hover:to-yellow-300 transition active:scale-95">
+        SAVE NICKNAME
+      </button>
+    </div>
+  </div>
 
   <!-- LEADERBOARD MODAL -->
   <div id="leaderboardModal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
@@ -281,8 +310,8 @@
     let currentUser = null;
     let channel = null;
     let mode = 'SIGN_IN';
+    let recentPresses = []; // Store activity timeline
 
-    // Default configuration (Min players strictly defaults to 2)
     let config = { timerDurationSec: 30, cooldownMs: 2000, minPlayers: 2 };
     let gameState = {
       status: 'LOBBY',
@@ -306,7 +335,6 @@
 
     const tabSignIn = document.getElementById('tabSignIn');
     const tabSignUp = document.getElementById('tabSignUp');
-    const usernameWrapper = document.getElementById('usernameWrapper');
     const submitAuthBtn = document.getElementById('submitAuthBtn');
     const authError = document.getElementById('authError');
 
@@ -367,7 +395,6 @@
       mode = 'SIGN_IN';
       tabSignIn.className = 'py-2.5 rounded-lg bg-red-600 text-white shadow';
       tabSignUp.className = 'py-2.5 rounded-lg text-gray-400 hover:text-white';
-      usernameWrapper.classList.add('hidden');
       passwordValidationWrapper.classList.add('hidden');
       submitAuthBtn.innerText = 'SIGN IN TO PLAY';
       authError.classList.add('hidden');
@@ -377,13 +404,11 @@
       mode = 'SIGN_UP';
       tabSignUp.className = 'py-2.5 rounded-lg bg-red-600 text-white shadow';
       tabSignIn.className = 'py-2.5 rounded-lg text-gray-400 hover:text-white';
-      usernameWrapper.classList.remove('hidden');
       if (passwordInput.value.length > 0) passwordValidationWrapper.classList.remove('hidden');
       submitAuthBtn.innerText = 'CREATE ACCOUNT & PLAY';
       authError.classList.add('hidden');
     });
 
-    // Fetch Admin settings from Supabase database on startup
     async function fetchSavedCloudConfig() {
       try {
         const { data, error } = await supabaseClient
@@ -432,7 +457,6 @@
       showScreen(screenLobby);
     }
 
-    // 100% SUPABASE CLOUD REALTIME WEBSOCKET CONNECTION
     function initSupabaseCloudRealtime(playerName) {
       channel = supabaseClient.channel('countdown-global-room', {
         config: { presence: { key: currentUser.id } }
@@ -452,7 +476,6 @@
           if (count >= config.minPlayers && gameState.status === 'LOBBY') {
             startCloudMatch();
           } else if (count < config.minPlayers && gameState.status === 'PLAYING') {
-            // If active players drop below minPlayers during a match, pause and return to lobby
             clearInterval(gameLoopInterval);
             gameState.status = 'LOBBY';
             showScreen(screenLobby);
@@ -463,6 +486,9 @@
           gameState.leaderId = payload.userId;
           gameState.leaderName = payload.userName;
           gameState.timerValue = config.timerDurationSec;
+          
+          // Log into live activity feed
+          addActivityFeedLog(payload.userName, payload.timeStr);
           playStealSound();
           updateUI();
         })
@@ -482,6 +508,22 @@
         });
     }
 
+    function addActivityFeedLog(userName, timeStr) {
+      const nowStr = timeStr || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      recentPresses.unshift({ userName, timeStr: nowStr });
+      if (recentPresses.length > 5) recentPresses.pop();
+
+      const feedElem = document.getElementById('activityFeed');
+      if (feedElem) {
+        feedElem.innerHTML = recentPresses.map((p, idx) => `
+          <div class="flex justify-between items-center bg-black/40 px-3 py-1.5 rounded-lg border border-gray-800/80 ${idx === 0 ? 'text-amber-400 font-bold border-amber-500/40' : 'text-gray-400'}">
+            <span>⚡ <strong class="text-white">${p.userName}</strong> stole crown!</span>
+            <span class="text-[10px] text-gray-500">${p.timeStr}</span>
+          </div>
+        `).join('');
+      }
+    }
+
     function startCloudMatch() {
       const activeCount = Object.keys(gameState.players).length;
       if (activeCount < config.minPlayers) {
@@ -495,6 +537,8 @@
       gameState.timerValue = config.timerDurationSec;
       gameState.leaderId = null;
       gameState.leaderName = null;
+      recentPresses = [];
+      document.getElementById('activityFeed').innerHTML = '<p class="text-gray-500 text-center py-1">Waiting for first crown steal...</p>';
 
       clearInterval(gameLoopInterval);
       gameLoopInterval = setInterval(() => {
@@ -585,6 +629,11 @@
           authError.classList.remove('hidden');
         } else if (data.user) {
           currentUser = data.user;
+          // Update username metadata if specified
+          if (username) {
+            await supabaseClient.auth.updateUser({ data: { username } });
+            currentUser.user_metadata.username = username;
+          }
           onUserAuthenticated();
         }
       }
@@ -609,7 +658,9 @@
       const isLeader = gameState.leaderId === currentUser?.id;
 
       if (gameState.leaderName) {
-        document.getElementById('leaderName').innerText = isLeader ? 'YOU HOLD THE CROWN 👑' : gameState.leaderName.toUpperCase();
+        document.getElementById('leaderName').innerHTML = isLeader 
+          ? '<span>YOU HOLD THE CROWN 👑</span>' 
+          : `<span class="text-amber-400">👑 ${gameState.leaderName.toUpperCase()}</span>`;
       } else {
         document.getElementById('leaderName').innerText = 'NO LEADER';
       }
@@ -664,15 +715,19 @@
       if (Date.now() < cooldownUntil) return;
 
       const userName = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'Player';
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
       gameState.leaderId = currentUser.id;
       gameState.leaderName = userName;
       gameState.timerValue = config.timerDurationSec;
+
+      addActivityFeedLog(userName, timeStr);
 
       if (channel) {
         channel.send({
           type: 'broadcast',
           event: 'steal_crown',
-          payload: { userId: currentUser.id, userName }
+          payload: { userId: currentUser.id, userName, timeStr }
         });
       }
 
@@ -695,7 +750,46 @@
       updateUI();
     });
 
-    // Leaderboard Modal
+    // NICKNAME EDIT MODAL LOGIC
+    const editNicknameBtn = document.getElementById('editNicknameBtn');
+    const nicknameModal = document.getElementById('nicknameModal');
+    const closeNicknameModal = document.getElementById('closeNicknameModal');
+    const saveNicknameBtn = document.getElementById('saveNicknameBtn');
+    const editNicknameInput = document.getElementById('editNicknameInput');
+
+    editNicknameBtn.addEventListener('click', () => {
+      editNicknameInput.value = currentUser?.user_metadata?.username || '';
+      nicknameModal.classList.remove('hidden');
+    });
+    closeNicknameModal.addEventListener('click', () => nicknameModal.classList.add('hidden'));
+
+    saveNicknameBtn.addEventListener('click', async () => {
+      const newNickname = editNicknameInput.value.trim();
+      if (!newNickname || !currentUser) return;
+
+      const { data, error } = await supabaseClient.auth.updateUser({
+        data: { username: newNickname }
+      });
+
+      if (!error) {
+        currentUser.user_metadata.username = newNickname;
+        userBadgeName.innerText = newNickname;
+        nicknameModal.classList.add('hidden');
+
+        // Re-track presence with new nickname
+        if (channel) {
+          await channel.track({
+            id: currentUser.id,
+            name: newNickname,
+            email: currentUser.email,
+            joinedAt: new Date().toISOString()
+          });
+        }
+        updateUI();
+      }
+    });
+
+    // LEADERBOARD MODAL
     const leaderboardBtn = document.getElementById('leaderboardBtn');
     const leaderboardModal = document.getElementById('leaderboardModal');
     const closeModal = document.getElementById('closeModal');
@@ -746,7 +840,6 @@
       config.cooldownMs = cooldownMs;
       config.minPlayers = minPlayers;
 
-      // Save to Supabase game_settings table
       try {
         await supabaseClient
           .from('game_settings')
