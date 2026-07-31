@@ -475,16 +475,11 @@
 
           const count = Object.keys(activePlayers).length;
 
-          // If a match is in progress, DO NOT RESET IT when a player leaves!
-          // Only start a match if we are in LOBBY state and have enough players.
+          // PERSISTENT CROWN ON DISCONNECT:
+          // We DO NOT reset leaderId or leaderName when a player disconnects!
+          // The player holds the crown even if they disconnect, unless another active player steals it!
           if (count >= config.minPlayers && gameState.status === 'LOBBY') {
             startCloudMatch();
-          }
-
-          // If current crown holder disconnected mid-game, reset crown to NO LEADER
-          if (gameState.status === 'PLAYING' && gameState.leaderId && !activePlayers[gameState.leaderId]) {
-            gameState.leaderId = null;
-            gameState.leaderName = null;
           }
 
           updateUI();
@@ -590,7 +585,6 @@
         gameState.leaderId = null;
         gameState.leaderName = null;
 
-        // Check if remaining players meet min requirement for NEXT round
         if (Object.keys(gameState.players).length >= config.minPlayers) {
           startCloudMatch();
         } else {
@@ -688,7 +682,6 @@
         if (gameState.status === 'LOBBY') {
           showScreen(screenLobby);
         } else if (gameState.status === 'PLAYING') {
-          // STATEFUL GUARANTEE: Keep showing gameplay screen once PLAYING, regardless of disconnects!
           showScreen(screenGame);
         }
       }
