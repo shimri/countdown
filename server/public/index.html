@@ -3,63 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>COUNTDOWN — Realtime Multiplayer Web App Game</title>
+  <title>COUNTDOWN 👑 Realtime Cloud Arcade Game</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3940256099942544" crossorigin="anonymous"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Outfit', sans-serif;
-      background: radial-gradient(circle at center, #1e1b2e 0%, #0b0914 100%);
+      background: radial-gradient(circle at center, #1b1733 0%, #08060f 100%);
+      overflow-x: hidden;
     }
-    .glow-red { box-shadow: 0 0 60px rgba(239, 68, 68, 0.45); }
-    .glow-gold { box-shadow: 0 0 60px rgba(245, 158, 11, 0.55); }
-    .glass {
-      background: rgba(255, 255, 255, 0.04);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    #particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
     }
-    @keyframes pulse-timer {
-      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(239,68,68,0.8)); }
-      50% { transform: scale(1.08); filter: drop-shadow(0 0 40px rgba(239,68,68,1)); }
-    }
-    .animate-danger { animation: pulse-timer 0.5s infinite ease-in-out; }
+    .glow-red { box-shadow: 0 0 70px rgba(239, 68, 68, 0.6); }
+    .glow-gold { box-shadow: 0 0 80px rgba(245, 158, 11, 0.7); }
+    .glow-neon { box-shadow: 0 0 50px rgba(168, 85, 247, 0.5); }
     
-    @keyframes crown-bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
     }
-    .crown-bounce { animation: crown-bounce 1.5s infinite ease-in-out; }
+    .glass-gold {
+      background: rgba(245, 158, 11, 0.08);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    @keyframes pulse-timer {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 25px rgba(239, 68, 68, 0.9)); }
+      50% { transform: scale(1.1); filter: drop-shadow(0 0 50px rgba(239, 68, 68, 1)); }
+    }
+    .animate-danger { animation: pulse-timer 0.4s infinite ease-in-out; }
+    
+    @keyframes crown-float {
+      0%, 100% { transform: translateY(0) rotate(-3deg); filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.8)); }
+      50% { transform: translateY(-12px) rotate(3deg); filter: drop-shadow(0 0 40px rgba(245, 158, 11, 1)); }
+    }
+    .crown-float { animation: crown-float 2.5s infinite ease-in-out; }
+
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-4px, 4px); }
+      40% { transform: translate(4px, -4px); }
+      60% { transform: translate(-4px, -2px); }
+      80% { transform: translate(2px, 2px); }
+    }
+    .screen-shake { animation: shake 0.25s ease-in-out; }
   </style>
 </head>
-<body class="min-h-screen text-white flex flex-col justify-between items-center p-4 select-none overflow-x-hidden">
+<body id="bodyContainer" class="min-h-screen text-white flex flex-col justify-between items-center p-4 select-none">
 
-  <!-- TOP RESPONSIVE HEADER -->
-  <header class="w-full max-w-md text-center pt-2">
+  <!-- DYNAMIC PARTICLE BACKGROUND -->
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- TOP HIGH-ENERGY HEADER -->
+  <header class="w-full max-w-md text-center pt-2 z-10">
     <div class="flex flex-col gap-2 mb-3">
-      <!-- Top Row: Logo + User Controls -->
+      <!-- Logo + User Badge Row -->
       <div class="flex justify-between items-center w-full">
         <div class="flex items-center gap-2">
-          <span class="text-2xl crown-bounce">👑</span>
-          <h1 class="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-amber-400 to-amber-200">
-            COUNTDOWN
-          </h1>
+          <span class="text-3xl crown-float">👑</span>
+          <div>
+            <h1 class="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-amber-400 to-yellow-200">
+              COUNTDOWN
+            </h1>
+            <span class="text-[9px] font-extrabold tracking-widest text-purple-400 uppercase block -mt-1">CLOUD ARCADE ARENA</span>
+          </div>
         </div>
 
         <!-- User Badge & Sign Out Button -->
-        <div id="userBadge" class="hidden text-xs bg-black/60 border border-gray-800 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-md">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
-          <span id="userBadgeName" class="font-bold text-gray-200 whitespace-nowrap"></span>
-          <button id="editNicknameBtn" title="Edit Nickname" class="text-amber-400 hover:text-amber-300 font-bold px-1 text-xs">✏️</button>
+        <div id="userBadge" class="hidden text-xs bg-black/70 border border-purple-500/40 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl">
+          <span id="userBadgeAvatar" class="text-base">⚡</span>
+          <span id="userBadgeName" class="font-black text-gray-200 whitespace-nowrap"></span>
+          <button id="editNicknameBtn" title="Edit Avatar & Nickname" class="text-amber-400 hover:text-amber-300 font-bold px-1 text-xs">✏️</button>
           <button id="logoutBtn" class="bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition ml-1 flex-shrink-0">
-            Sign Out
+            Exit
           </button>
         </div>
       </div>
 
-      <!-- Admin Panel Button (Dedicated Sub-Bar so it NEVER blocks Sign Out on mobile) -->
+      <!-- Admin Panel Button -->
       <div class="w-full flex justify-end">
         <button id="adminPanelBtn" class="hidden text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 px-3 py-1 rounded-full font-bold hover:bg-amber-500/30 transition">
           ⚙️ Admin Dashboard
@@ -67,9 +100,9 @@
       </div>
     </div>
 
-    <!-- CURRENT CROWN HOLDER DISPLAY -->
-    <div id="leaderBanner" class="glass rounded-2xl py-3.5 px-6 shadow-2xl transition-all duration-300 relative overflow-hidden">
-      <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Current Crown Leader</p>
+    <!-- CROWN LEADER BANNER -->
+    <div id="leaderBanner" class="glass-gold rounded-2xl py-3.5 px-6 shadow-2xl transition-all duration-300 relative overflow-hidden">
+      <p class="text-[10px] font-extrabold uppercase tracking-widest text-amber-300/80">👑 CURRENT CROWN LEADER 👑</p>
       <p id="leaderName" class="text-2xl font-black text-amber-400 mt-0.5 tracking-wide flex items-center justify-center gap-2">
         <span>NO LEADER</span>
       </p>
@@ -77,31 +110,51 @@
   </header>
 
   <!-- MAIN GAME SCREEN CONTAINER -->
-  <main id="app" class="w-full max-w-md flex flex-col items-center justify-center my-auto">
+  <main id="app" class="w-full max-w-md flex flex-col items-center justify-center my-auto z-10">
     
     <!-- AUTHENTICATION SCREEN -->
     <div id="screenAuth" class="w-full glass rounded-3xl p-8 flex flex-col items-center shadow-2xl">
-      <h2 class="text-2xl font-bold mb-1">Enter Cloud Arena</h2>
-      <p class="text-gray-400 text-xs mb-6 text-center">Sign in or register to play 100% Cloud Multiplayer on Supabase.</p>
+      <div class="text-4xl mb-2 crown-float">🎮</div>
+      <h2 class="text-2xl font-black tracking-wide mb-1 text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-amber-300">
+        JOIN THE CLOUD ARENA
+      </h2>
+      <p class="text-gray-400 text-xs mb-5 text-center">Choose your hero avatar & nickname to steal the crown!</p>
 
-      <div class="w-full grid grid-cols-2 bg-black/40 p-1 rounded-xl mb-6 text-xs font-bold text-center">
-        <button id="tabSignIn" class="py-2.5 rounded-lg bg-red-600 text-white shadow">SIGN IN</button>
+      <div class="w-full grid grid-cols-2 bg-black/50 p-1 rounded-xl mb-5 text-xs font-bold text-center">
+        <button id="tabSignIn" class="py-2.5 rounded-lg bg-red-600 text-white shadow-lg">SIGN IN</button>
         <button id="tabSignUp" class="py-2.5 rounded-lg text-gray-400 hover:text-white">CREATE ACCOUNT</button>
       </div>
 
       <div id="authForm" class="w-full flex flex-col items-center">
-        <!-- Nickname field ONLY visible on SIGN UP -->
+        
+        <!-- AVATAR SELECTION GRID -->
+        <div id="avatarSelectorWrapper" class="w-full mb-4 hidden">
+          <label class="block text-xs font-bold text-purple-300 mb-2 uppercase tracking-wider text-center">Select Your Hero Avatar</label>
+          <div class="grid grid-cols-5 gap-2 bg-black/40 p-2 rounded-xl border border-purple-500/30" id="avatarGrid">
+            <button type="button" class="avatar-opt text-2xl p-2 rounded-lg bg-purple-600/40 border border-purple-400" data-avatar="⚡">⚡</button>
+            <button type="button" class="avatar-opt text-2xl p-2 rounded-lg bg-black/40 hover:bg-purple-600/30" data-avatar="👑">👑</button>
+            <button type="button" class="avatar-opt text-2xl p-2 rounded-lg bg-black/40 hover:bg-purple-600/30" data-avatar="🐉">🐉</button>
+            <button type="button" class="avatar-opt text-2xl p-2 rounded-lg bg-black/40 hover:bg-purple-600/30" data-avatar="🚀">🚀</button>
+            <button type="button" class="avatar-opt text-2xl p-2 rounded-lg bg-black/40 hover:bg-purple-600/30" data-avatar="💎">💎</button>
+            <button type="button" class="avatar-opt text-2xl p-2 rounded-lg bg-black/40 hover:bg-purple-600/30" data-avatar="🦄">🦄</button>
+            <button type="button" class="avatar-opt text-2xl p-2 rounded-lg bg-black/40 hover:bg-purple-600/30" data-avatar="🏆">🏆</button>
+            <button type="button" class="avatar-opt text-2xl p-2 rounded-lg bg-black/40 hover:bg-purple-600/30" data-avatar="🦁">🦁</button>
+            <button type="button" class="avatar-opt text-2xl p-2 rounded-lg bg-black/40 hover:bg-purple-600/30" data-avatar="👾">👾</button>
+            <button type="button" class="avatar-opt text-2xl p-2 rounded-lg bg-black/40 hover:bg-purple-600/30" data-avatar="🦸">🦸</button>
+          </div>
+        </div>
+
         <div id="usernameWrapper" class="w-full hidden">
-          <input type="text" id="usernameInput" placeholder="Choose Display Nickname" maxlength="15"
-            class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold focus:outline-none focus:border-red-500 transition mb-3 text-white">
+          <input type="text" id="usernameInput" placeholder="Choose Hero Nickname" maxlength="15"
+            class="w-full bg-black/60 border border-purple-500/40 rounded-xl px-4 py-3.5 text-sm font-bold focus:outline-none focus:border-amber-400 transition mb-3 text-white">
         </div>
 
         <input type="email" id="emailInput" placeholder="Email address"
-          class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold focus:outline-none focus:border-red-500 transition mb-3 text-white">
+          class="w-full bg-black/60 border border-purple-500/40 rounded-xl px-4 py-3.5 text-sm font-bold focus:outline-none focus:border-amber-400 transition mb-3 text-white">
         
         <div class="relative w-full mb-2">
           <input type="password" id="passwordInput" placeholder="Password"
-            class="w-full bg-black/50 border border-gray-700 rounded-xl pl-4 pr-12 py-3.5 text-sm font-semibold focus:outline-none focus:border-red-500 transition text-white">
+            class="w-full bg-black/60 border border-purple-500/40 rounded-xl pl-4 pr-12 py-3.5 text-sm font-bold focus:outline-none focus:border-amber-400 transition text-white">
           <button type="button" id="togglePasswordBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1">
             <svg id="eyeIconShow" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -125,8 +178,8 @@
           </div>
         </div>
 
-        <button id="submitAuthBtn" class="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 font-black text-lg py-4 rounded-xl shadow-lg transition active:scale-95">
-          SIGN IN TO PLAY
+        <button id="submitAuthBtn" class="w-full bg-gradient-to-r from-red-600 via-purple-600 to-amber-500 hover:from-red-500 hover:to-amber-400 font-black text-lg py-4 rounded-xl shadow-2xl transition active:scale-95 glow-neon">
+          START PLAYING NOW 🚀
         </button>
       </div>
 
@@ -135,17 +188,17 @@
 
     <!-- LOBBY SCREEN -->
     <div id="screenLobby" class="w-full glass rounded-3xl p-8 flex flex-col items-center shadow-2xl hidden">
-      <h2 class="text-xl font-bold tracking-wider text-gray-300 mb-6">CLOUD MULTIPLAYER LOBBY</h2>
+      <h2 class="text-xl font-black tracking-wider text-amber-400 mb-6">WAITING IN CLOUD LOBBY</h2>
       
-      <div class="w-44 h-44 rounded-full border-4 border-red-500/30 flex flex-col items-center justify-center bg-black/40 glow-red mb-6">
-        <span id="playerCount" class="text-5xl font-black text-red-500">1 / 2</span>
-        <span class="text-xs text-gray-400 tracking-widest mt-1">PLAYERS</span>
+      <div class="w-48 h-48 rounded-full border-4 border-amber-500/40 flex flex-col items-center justify-center bg-black/50 glow-gold mb-6 relative">
+        <span id="playerCount" class="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-200">1 / 2</span>
+        <span class="text-xs text-amber-300 font-extrabold tracking-widest mt-1">HEROES READY</span>
       </div>
 
-      <p id="lobbyStatusText" class="text-sm text-gray-400 mb-6">Waiting for players to join Cloud Lobby...</p>
+      <p id="lobbyStatusText" class="text-sm font-bold text-purple-200 mb-6 animate-pulse">Waiting for another hero to join...</p>
 
       <div class="w-full border-t border-gray-800 pt-4 mb-4">
-        <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Live Players in Lobby</p>
+        <p class="text-xs font-black text-purple-400 uppercase tracking-widest mb-3">Live Players in Lobby</p>
         <ul id="playerList" class="space-y-2 text-sm text-center"></ul>
       </div>
 
@@ -162,38 +215,40 @@
       
       <!-- LIVE ACTIVITY FEED: RECENT PRESSES -->
       <div class="w-full glass rounded-2xl p-3 mb-6 flex flex-col items-center text-xs">
-        <div class="flex items-center gap-1.5 text-gray-400 font-bold uppercase tracking-wider mb-2">
-          <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-          <span>Live Action Activity</span>
+        <div class="flex items-center gap-1.5 text-amber-400 font-black uppercase tracking-wider mb-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+          <span>⚡ LIVE ACTION FEED</span>
         </div>
         <div id="activityFeed" class="w-full space-y-1.5 max-h-24 overflow-y-auto font-mono text-[11px]">
           <p class="text-gray-500 text-center py-1">Waiting for first crown steal...</p>
         </div>
       </div>
 
-      <div id="timerContainer" class="w-64 h-64 rounded-full border-8 border-gray-800 bg-black/70 flex flex-col items-center justify-center shadow-2xl relative mb-10 transition-all duration-300">
-        <span id="timerText" class="text-7xl font-black tracking-tighter">30</span>
-        <span class="text-xs text-gray-500 tracking-widest font-semibold mt-1">SECONDS</span>
+      <!-- TIMER CIRCLE WITH GLOW -->
+      <div id="timerContainer" class="w-64 h-64 rounded-full border-8 border-purple-500/50 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-8 transition-all duration-300 glow-neon">
+        <span id="timerText" class="text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-300">30</span>
+        <span class="text-xs text-purple-300 font-extrabold tracking-widest mt-1">SECONDS REMAINING</span>
       </div>
 
-      <button id="actionBtn" class="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 h-24 rounded-3xl font-black text-2xl tracking-wider shadow-2xl transition active:scale-95 glow-red">
-        TAKE CROWN
+      <!-- GIANT TAKE CROWN BUTTON -->
+      <button id="actionBtn" class="w-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 hover:from-red-500 hover:to-yellow-300 text-black h-24 rounded-3xl font-black text-3xl tracking-wider shadow-2xl transition active:scale-95 glow-gold">
+        👑 TAKE CROWN!
       </button>
     </div>
 
     <!-- WINNER SCREEN -->
-    <div id="screenWinner" class="w-full glass rounded-3xl p-8 flex flex-col items-center text-center shadow-2xl hidden">
-      <div class="text-5xl mb-2 crown-bounce">🏆</div>
-      <p class="text-xs font-bold tracking-widest text-gray-400 mb-1">MATCH FINISHED</p>
+    <div id="screenWinner" class="w-full glass-gold rounded-3xl p-8 flex flex-col items-center text-center shadow-2xl hidden">
+      <div class="text-6xl mb-2 crown-float">🏆</div>
+      <p class="text-xs font-black tracking-widest text-amber-300 mb-1">VICTORY!</p>
       <h2 id="winnerText" class="text-4xl font-black text-amber-400 mb-2">YOU WON!</h2>
-      <p class="text-gray-300 text-sm mb-6">Held the crown when time expired.</p>
+      <p class="text-gray-200 text-sm mb-6">Claimed the Crown of Countdown!</p>
 
-      <div class="w-full bg-black/40 border border-amber-500/30 rounded-xl p-3 mb-4 text-xs text-center">
-        <p class="text-amber-400 font-bold mb-1">🎁 Watch Reward Ad</p>
-        <p class="text-gray-400 text-[11px]">Watch a short video ad to double your match points!</p>
+      <div class="w-full bg-black/50 border border-amber-500/40 rounded-2xl p-4 mb-4 text-xs text-center">
+        <p class="text-amber-400 font-black text-sm mb-1">🎁 Watch Reward Ad</p>
+        <p class="text-gray-300 text-xs">Watch a short video ad to double your match points!</p>
       </div>
 
-      <p class="text-xs text-gray-500 animate-pulse">Starting next round...</p>
+      <p class="text-xs text-amber-300 font-bold animate-pulse">Starting next round...</p>
     </div>
 
     <!-- LOCKED SCREEN -->
@@ -207,22 +262,38 @@
   </main>
 
   <!-- FOOTER NAVIGATION -->
-  <footer class="w-full max-w-md text-center pb-4 text-xs text-gray-500 flex justify-between items-center">
-    <span>100% Supabase Cloud Engine</span>
-    <button id="leaderboardBtn" class="text-amber-400 hover:underline font-semibold">🏆 Leaderboard</button>
+  <footer class="w-full max-w-md text-center pb-3 text-xs text-gray-500 flex justify-between items-center z-10">
+    <span class="font-bold text-purple-400/80">⚡ 100% Cloud Arcade</span>
+    <button id="leaderboardBtn" class="text-amber-400 hover:underline font-extrabold text-sm flex items-center gap-1">
+      🏆 Leaderboard
+    </button>
   </footer>
 
-  <!-- NICKNAME EDIT MODAL -->
+  <!-- NICKNAME & AVATAR EDIT MODAL -->
   <div id="nicknameModal" class="fixed inset-0 bg-black/85 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
-    <div class="glass border-amber-500/40 w-full max-w-sm rounded-3xl p-6 relative shadow-2xl">
+    <div class="glass border-amber-500/40 w-full max-w-sm rounded-3xl p-6 relative shadow-2xl text-center">
       <button id="closeNicknameModal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
-      <h3 class="text-lg font-black text-amber-400 mb-4 flex items-center gap-2">
-        ✏️ Edit Your Nickname
+      <h3 class="text-lg font-black text-amber-400 mb-4 flex items-center justify-center gap-2">
+        ✏️ Edit Avatar & Nickname
       </h3>
+
+      <div class="grid grid-cols-5 gap-2 bg-black/40 p-2 rounded-xl border border-purple-500/30 mb-4" id="editAvatarGrid">
+        <button type="button" class="edit-avatar-opt text-2xl p-2 rounded-lg bg-purple-600/40 border border-purple-400" data-avatar="⚡">⚡</button>
+        <button type="button" class="edit-avatar-opt text-2xl p-2 rounded-lg bg-black/40" data-avatar="👑">👑</button>
+        <button type="button" class="edit-avatar-opt text-2xl p-2 rounded-lg bg-black/40" data-avatar="🐉">🐉</button>
+        <button type="button" class="edit-avatar-opt text-2xl p-2 rounded-lg bg-black/40" data-avatar="🚀">🚀</button>
+        <button type="button" class="edit-avatar-opt text-2xl p-2 rounded-lg bg-black/40" data-avatar="💎">💎</button>
+        <button type="button" class="edit-avatar-opt text-2xl p-2 rounded-lg bg-black/40" data-avatar="🦄">🦄</button>
+        <button type="button" class="edit-avatar-opt text-2xl p-2 rounded-lg bg-black/40" data-avatar="🏆">🏆</button>
+        <button type="button" class="edit-avatar-opt text-2xl p-2 rounded-lg bg-black/40" data-avatar="🦁">🦁</button>
+        <button type="button" class="edit-avatar-opt text-2xl p-2 rounded-lg bg-black/40" data-avatar="👾">👾</button>
+        <button type="button" class="edit-avatar-opt text-2xl p-2 rounded-lg bg-black/40" data-avatar="🦸">🦸</button>
+      </div>
+
       <input type="text" id="editNicknameInput" placeholder="New Display Nickname" maxlength="15"
-        class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-400 mb-4 text-white">
+        class="w-full bg-black/60 border border-gray-700 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-400 mb-4 text-white">
       <button id="saveNicknameBtn" class="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black py-3 rounded-xl shadow-lg hover:from-amber-400 hover:to-yellow-300 transition active:scale-95">
-        SAVE NICKNAME
+        SAVE HERO PROFILE
       </button>
     </div>
   </div>
@@ -232,9 +303,9 @@
     <div class="glass w-full max-w-md rounded-3xl p-6 relative">
       <button id="closeModal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
       <h3 class="text-xl font-black text-amber-400 mb-4 flex items-center gap-2">
-        🏆 Global Leaderboard <span class="text-xs font-normal text-gray-400">(Supabase)</span>
+        🏆 Global Cloud Leaderboard
       </h3>
-      <div class="space-y-2 max-h-60 overflow-y-auto" id="leaderboardRows">
+      <div class="space-y-2 max-h-64 overflow-y-auto" id="leaderboardRows">
         <p class="text-gray-500 text-center py-4">Loading stats...</p>
       </div>
     </div>
@@ -282,7 +353,51 @@
   </div>
 
   <script>
-    // WEB AUDIO SYNTHESIZER
+    // FLOATING PARTICLE BACKGROUND CANVAS
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    for (let i = 0; i < 45; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 2.5 + 0.5,
+        color: ['#f59e0b', '#ef4444', '#a855f7', '#3b82f6'][Math.floor(Math.random() * 4)],
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        alpha: Math.random() * 0.7 + 0.3
+      });
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.fill();
+      });
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // ARCADE WEB AUDIO SYNTHESIZER
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
     function playBeep(freq, type = 'sine', duration = 0.1) {
@@ -291,7 +406,7 @@
       const gain = audioCtx.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
@@ -300,15 +415,21 @@
     }
 
     function playStealSound() {
-      playBeep(587.33, 'triangle', 0.12);
-      setTimeout(() => playBeep(880, 'sine', 0.2), 80);
+      playBeep(587.33, 'square', 0.08);
+      setTimeout(() => playBeep(880, 'sine', 0.2), 60);
+      setTimeout(() => playBeep(1174.66, 'triangle', 0.25), 120);
+
+      // Trigger screen shake & neon flash FX
+      const body = document.getElementById('bodyContainer');
+      body.classList.add('screen-shake');
+      setTimeout(() => body.classList.remove('screen-shake'), 250);
     }
 
     function playWinSound() {
-      playBeep(523.25, 'triangle', 0.15);
-      setTimeout(() => playBeep(659.25, 'triangle', 0.15), 120);
-      setTimeout(() => playBeep(783.99, 'triangle', 0.15), 240);
-      setTimeout(() => playBeep(1046.50, 'triangle', 0.4), 360);
+      playBeep(523.25, 'square', 0.15);
+      setTimeout(() => playBeep(659.25, 'square', 0.15), 100);
+      setTimeout(() => playBeep(783.99, 'square', 0.15), 200);
+      setTimeout(() => playBeep(1046.50, 'triangle', 0.5), 320);
     }
 
     // 100% SUPABASE CLOUD ENGINE CONFIG
@@ -319,6 +440,7 @@
     let currentUser = null;
     let channel = null;
     let mode = 'SIGN_IN';
+    let selectedAvatar = '⚡';
     let recentPresses = [];
 
     let config = { timerDurationSec: 30, cooldownMs: 2000, minPlayers: 2 };
@@ -326,6 +448,7 @@
       status: 'LOBBY',
       leaderId: null,
       leaderName: null,
+      leaderAvatar: '👑',
       timerValue: 30,
       players: {}
     };
@@ -340,11 +463,13 @@
     const screenLocked = document.getElementById('screenLocked');
     const userBadge = document.getElementById('userBadge');
     const userBadgeName = document.getElementById('userBadgeName');
+    const userBadgeAvatar = document.getElementById('userBadgeAvatar');
     const adminPanelBtn = document.getElementById('adminPanelBtn');
 
     const tabSignIn = document.getElementById('tabSignIn');
     const tabSignUp = document.getElementById('tabSignUp');
     const usernameWrapper = document.getElementById('usernameWrapper');
+    const avatarSelectorWrapper = document.getElementById('avatarSelectorWrapper');
     const submitAuthBtn = document.getElementById('submitAuthBtn');
     const authError = document.getElementById('authError');
 
@@ -356,6 +481,23 @@
     const strengthBar = document.getElementById('strengthBar');
     const ruleLength = document.getElementById('ruleLength');
     const ruleNumber = document.getElementById('ruleNumber');
+
+    // AVATAR SELECTION LISTENERS
+    document.querySelectorAll('.avatar-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.avatar-opt').forEach(b => b.className = 'avatar-opt text-2xl p-2 rounded-lg bg-black/40 hover:bg-purple-600/30');
+        btn.className = 'avatar-opt text-2xl p-2 rounded-lg bg-purple-600/40 border border-purple-400';
+        selectedAvatar = btn.getAttribute('data-avatar');
+      });
+    });
+
+    document.querySelectorAll('.edit-avatar-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.edit-avatar-opt').forEach(b => b.className = 'edit-avatar-opt text-2xl p-2 rounded-lg bg-black/40');
+        btn.className = 'edit-avatar-opt text-2xl p-2 rounded-lg bg-purple-600/40 border border-purple-400';
+        selectedAvatar = btn.getAttribute('data-avatar');
+      });
+    });
 
     togglePasswordBtn.addEventListener('click', () => {
       const isPassword = passwordInput.type === 'password';
@@ -406,8 +548,9 @@
       tabSignIn.className = 'py-2.5 rounded-lg bg-red-600 text-white shadow';
       tabSignUp.className = 'py-2.5 rounded-lg text-gray-400 hover:text-white';
       usernameWrapper.classList.add('hidden');
+      avatarSelectorWrapper.classList.add('hidden');
       passwordValidationWrapper.classList.add('hidden');
-      submitAuthBtn.innerText = 'SIGN IN TO PLAY';
+      submitAuthBtn.innerText = 'START PLAYING NOW 🚀';
       authError.classList.add('hidden');
     });
 
@@ -416,8 +559,9 @@
       tabSignUp.className = 'py-2.5 rounded-lg bg-red-600 text-white shadow';
       tabSignIn.className = 'py-2.5 rounded-lg text-gray-400 hover:text-white';
       usernameWrapper.classList.remove('hidden');
+      avatarSelectorWrapper.classList.remove('hidden');
       if (passwordInput.value.length > 0) passwordValidationWrapper.classList.remove('hidden');
-      submitAuthBtn.innerText = 'CREATE ACCOUNT & PLAY';
+      submitAuthBtn.innerText = 'CREATE HERO & PLAY';
       authError.classList.add('hidden');
     });
 
@@ -456,7 +600,11 @@
 
     function onUserAuthenticated() {
       const name = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'Player';
+      const avatar = currentUser.user_metadata?.avatar || '⚡';
+      selectedAvatar = avatar;
+
       userBadgeName.innerText = name;
+      userBadgeAvatar.innerText = avatar;
       userBadge.classList.remove('hidden');
 
       if (currentUser.email === 'shimri86@gmail.com') {
@@ -465,12 +613,12 @@
         adminPanelBtn.classList.add('hidden');
       }
 
-      initSupabaseCloudRealtime(name);
+      initSupabaseCloudRealtime(name, avatar);
       showScreen(screenLobby);
     }
 
     // 100% SUPABASE CLOUD REALTIME WEBSOCKET CONNECTION
-    function initSupabaseCloudRealtime(playerName) {
+    function initSupabaseCloudRealtime(playerName, playerAvatar) {
       channel = supabaseClient.channel('countdown-global-room', {
         config: { presence: { key: currentUser.id } }
       });
@@ -495,9 +643,10 @@
         .on('broadcast', { event: 'steal_crown' }, ({ payload }) => {
           gameState.leaderId = payload.userId;
           gameState.leaderName = payload.userName;
+          gameState.leaderAvatar = payload.userAvatar || '👑';
           gameState.timerValue = config.timerDurationSec;
           
-          addActivityFeedLog(payload.userName, payload.timeStr);
+          addActivityFeedLog(payload.userName, payload.userAvatar, payload.timeStr);
           playStealSound();
           updateUI();
         })
@@ -510,6 +659,7 @@
             await channel.track({
               id: currentUser.id,
               name: playerName,
+              avatar: playerAvatar,
               email: currentUser.email,
               joinedAt: new Date().toISOString()
             });
@@ -517,17 +667,18 @@
         });
     }
 
-    function addActivityFeedLog(userName, timeStr) {
+    function addActivityFeedLog(userName, userAvatar, timeStr) {
       const nowStr = timeStr || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      recentPresses.unshift({ userName, timeStr: nowStr });
+      const avatar = userAvatar || '⚡';
+      recentPresses.unshift({ userName, avatar, timeStr: nowStr });
       if (recentPresses.length > 5) recentPresses.pop();
 
       const feedElem = document.getElementById('activityFeed');
       if (feedElem) {
         feedElem.innerHTML = recentPresses.map((p, idx) => `
-          <div class="flex justify-between items-center bg-black/40 px-3 py-1.5 rounded-lg border border-gray-800/80 ${idx === 0 ? 'text-amber-400 font-bold border-amber-500/40' : 'text-gray-400'}">
-            <span>⚡ <strong class="text-white">${p.userName}</strong> stole crown!</span>
-            <span class="text-[10px] text-gray-500">${p.timeStr}</span>
+          <div class="flex justify-between items-center bg-black/50 px-3 py-1.5 rounded-lg border border-purple-500/30 ${idx === 0 ? 'text-amber-400 font-black border-amber-500/50' : 'text-gray-300'}">
+            <span>${p.avatar} <strong class="text-white">${p.userName}</strong> STOLE THE CROWN!</span>
+            <span class="text-[10px] text-gray-400 font-mono">${p.timeStr}</span>
           </div>
         `).join('');
       }
@@ -546,6 +697,7 @@
       gameState.timerValue = config.timerDurationSec;
       gameState.leaderId = null;
       gameState.leaderName = null;
+      gameState.leaderAvatar = '👑';
       recentPresses = [];
       document.getElementById('activityFeed').innerHTML = '<p class="text-gray-500 text-center py-1">Waiting for first crown steal...</p>';
 
@@ -578,9 +730,13 @@
       if (isWinner) {
         document.getElementById('winnerText').innerText = 'YOU WON! 🏆';
         playWinSound();
-        if (window.confetti) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        if (window.confetti) {
+          confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
+          setTimeout(() => confetti({ particleCount: 100, angle: 60, spread: 55, origin: { x: 0 } }), 250);
+          setTimeout(() => confetti({ particleCount: 100, angle: 120, spread: 55, origin: { x: 1 } }), 400);
+        }
       } else if (gameState.leaderName) {
-        document.getElementById('winnerText').innerText = gameState.leaderName + ' WINS!';
+        document.getElementById('winnerText').innerText = (gameState.leaderAvatar || '👑') + ' ' + gameState.leaderName + ' WINS!';
       } else {
         document.getElementById('winnerText').innerText = 'NOBODY WON';
       }
@@ -623,7 +779,7 @@
         }
 
         const { data, error } = await supabaseClient.auth.signUp({
-          email, password, options: { data: { username: username || email.split('@')[0] } }
+          email, password, options: { data: { username: username || email.split('@')[0], avatar: selectedAvatar } }
         });
         if (error) {
           authError.innerText = error.message;
@@ -665,7 +821,7 @@
       if (gameState.leaderName) {
         document.getElementById('leaderName').innerHTML = isLeader 
           ? '<span>YOU HOLD THE CROWN 👑</span>' 
-          : `<span class="text-amber-400">👑 ${gameState.leaderName.toUpperCase()}</span>`;
+          : `<span class="text-amber-400">👑 ${gameState.leaderAvatar || ''} ${gameState.leaderName.toUpperCase()}</span>`;
       } else {
         document.getElementById('leaderName').innerText = 'NO LEADER';
       }
@@ -673,12 +829,12 @@
       document.getElementById('playerCount').innerText = `${playerCount} / ${config.minPlayers}`;
       document.getElementById('lobbyStatusText').innerText = playerCount < config.minPlayers 
         ? `Waiting for ${config.minPlayers - playerCount} more player(s)...`
-        : 'Starting match...';
+        : 'Match starting!';
 
       document.getElementById('playerList').innerHTML = players.map(p => `
-        <li class="py-1.5 px-3 rounded-xl bg-black/30 border border-white/5 flex justify-between items-center ${p.id === currentUser?.id ? 'text-red-400 font-bold border-red-500/40' : 'text-gray-300'}">
-          <span>${p.name} ${p.id === currentUser?.id ? '(You)' : ''}</span>
-          ${gameState.leaderId === p.id ? '<span class="text-amber-400">👑</span>' : ''}
+        <li class="py-2 px-4 rounded-xl bg-black/40 border border-purple-500/20 flex justify-between items-center ${p.id === currentUser?.id ? 'text-amber-400 font-black border-amber-500/50' : 'text-gray-200'}">
+          <span class="flex items-center gap-2"><span>${p.avatar || '⚡'}</span> <strong class="text-white">${p.name}</strong> ${p.id === currentUser?.id ? '(You)' : ''}</span>
+          ${gameState.leaderId === p.id ? '<span class="text-amber-400 text-lg">👑</span>' : ''}
         </li>
       `).join('');
 
@@ -706,13 +862,13 @@
       const actionBtn = document.getElementById('actionBtn');
       if (isLeader) {
         actionBtn.innerText = 'YOU ARE LEADING 👑';
-        actionBtn.className = 'w-full bg-gradient-to-r from-amber-500 to-yellow-400 font-black text-2xl tracking-wider py-6 rounded-3xl shadow-2xl glow-gold text-black';
+        actionBtn.className = 'w-full bg-gradient-to-r from-amber-500 to-yellow-400 font-black text-3xl tracking-wider py-6 rounded-3xl shadow-2xl glow-gold text-black';
       } else if (Date.now() < cooldownUntil) {
         // Cooldown active
       } else {
-        actionBtn.innerText = 'TAKE CROWN';
+        actionBtn.innerText = '👑 TAKE CROWN!';
         actionBtn.disabled = false;
-        actionBtn.className = 'w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 font-black text-2xl tracking-wider py-6 rounded-3xl shadow-2xl active:scale-95 glow-red text-white';
+        actionBtn.className = 'w-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 hover:from-red-500 hover:to-yellow-300 text-black h-24 rounded-3xl font-black text-3xl tracking-wider shadow-2xl transition active:scale-95 glow-gold';
       }
     }
 
@@ -720,19 +876,21 @@
       if (Date.now() < cooldownUntil) return;
 
       const userName = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'Player';
+      const userAvatar = selectedAvatar || '⚡';
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
       gameState.leaderId = currentUser.id;
       gameState.leaderName = userName;
+      gameState.leaderAvatar = userAvatar;
       gameState.timerValue = config.timerDurationSec;
 
-      addActivityFeedLog(userName, timeStr);
+      addActivityFeedLog(userName, userAvatar, timeStr);
 
       if (channel) {
         channel.send({
           type: 'broadcast',
           event: 'steal_crown',
-          payload: { userId: currentUser.id, userName, timeStr }
+          payload: { userId: currentUser.id, userName, userAvatar, timeStr }
         });
       }
 
@@ -755,7 +913,7 @@
       updateUI();
     });
 
-    // NICKNAME EDIT MODAL LOGIC
+    // NICKNAME & AVATAR EDIT MODAL LOGIC
     const editNicknameBtn = document.getElementById('editNicknameBtn');
     const nicknameModal = document.getElementById('nicknameModal');
     const closeNicknameModal = document.getElementById('closeNicknameModal');
@@ -773,18 +931,22 @@
       if (!newNickname || !currentUser) return;
 
       const { data, error } = await supabaseClient.auth.updateUser({
-        data: { username: newNickname }
+        data: { username: newNickname, avatar: selectedAvatar }
       });
 
       if (!error) {
         currentUser.user_metadata.username = newNickname;
+        currentUser.user_metadata.avatar = selectedAvatar;
+
         userBadgeName.innerText = newNickname;
+        userBadgeAvatar.innerText = selectedAvatar;
         nicknameModal.classList.add('hidden');
 
         if (channel) {
           await channel.track({
             id: currentUser.id,
             name: newNickname,
+            avatar: selectedAvatar,
             email: currentUser.email,
             joinedAt: new Date().toISOString()
           });
@@ -811,10 +973,10 @@
         leaderboardRows.innerHTML = '<p class="text-gray-500 text-center py-4">No wins recorded yet.</p>';
       } else {
         leaderboardRows.innerHTML = data.map((row, idx) => `
-          <div class="flex justify-between items-center bg-black/40 px-4 py-3 rounded-xl border border-gray-800">
+          <div class="flex justify-between items-center bg-black/40 px-4 py-3 rounded-xl border border-purple-500/30">
             <div>
               <span class="font-bold text-gray-200">#${idx + 1} ${row.username}</span>
-              <span class="text-xs text-gray-500 block">${row.total_taps || 0} taps • ${row.games_played || 0} matches</span>
+              <span class="text-xs text-gray-400 block">${row.total_taps || 0} taps • ${row.games_played || 0} matches</span>
             </div>
             <span class="font-black text-amber-400 text-lg">${row.wins} WINS</span>
           </div>
