@@ -27,6 +27,7 @@
     .glow-red { box-shadow: 0 0 70px rgba(239, 68, 68, 0.6); }
     .glow-gold { box-shadow: 0 0 80px rgba(245, 158, 11, 0.7); }
     .glow-blue { box-shadow: 0 0 70px rgba(59, 130, 246, 0.7); }
+    .glow-cyan { box-shadow: 0 0 70px rgba(6, 182, 212, 0.8); }
     .glow-neon { box-shadow: 0 0 50px rgba(168, 85, 247, 0.5); }
     
     .glass {
@@ -222,72 +223,72 @@
       </div>
 
       <!-- TIMER CIRCLE WITH GLOW -->
-      <div id="timerContainer" class="w-48 h-48 rounded-full border-8 border-purple-500/50 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-4 transition-all duration-300 glow-neon">
+      <div id="timerContainer" class="w-48 h-48 rounded-full border-8 border-purple-500/50 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-3 transition-all duration-300 glow-neon">
         <span id="timerText" class="text-6xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-300">30</span>
         <span class="text-xs text-purple-300 font-extrabold tracking-widest mt-1">SECONDS</span>
       </div>
 
       <!-- REWARD AD GET PERKS QUICK BAR -->
-      <div class="w-full flex justify-between items-center mb-2 px-1">
+      <div class="w-full flex justify-between items-center mb-1.5 px-1">
         <span class="text-xs font-black text-purple-300">HERO PERKS ARSENAL</span>
-        <button id="gameWatchAdBtn" class="text-xs font-black text-amber-400 hover:text-amber-300 bg-amber-500/20 border border-amber-500/40 px-3 py-1 rounded-full flex items-center gap-1 transition">
+        <button id="gameWatchAdBtn" class="text-xs font-black text-amber-400 hover:text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition">
           📺 Watch Ad (+2 Perks)
         </button>
       </div>
 
-      <!-- HERO PERKS ARSENAL GRID (4 PERKS) -->
+      <!-- HERO PERKS ARSENAL GRID (5 PERKS) -->
       <div class="w-full grid grid-cols-2 gap-2 mb-3">
         <!-- CROWN SHIELD PERK -->
-        <button id="shieldPerkBtn" class="bg-blue-600/30 border border-blue-400/50 rounded-xl p-2.5 flex items-center justify-between transition active:scale-95 shadow-md">
+        <button id="shieldPerkBtn" class="bg-blue-600/30 border border-blue-400/50 rounded-xl p-2 flex items-center justify-between transition active:scale-95 shadow-md">
           <div class="flex items-center gap-1.5">
-            <span class="text-xl">🛡️</span>
+            <span class="text-lg">🛡️</span>
             <div class="text-left">
               <span class="text-xs font-black text-blue-300 block">Shield</span>
               <span class="text-[9px] text-gray-300 font-semibold">3s Guard</span>
             </div>
           </div>
-          <span id="shieldCountBadge" class="text-[10px] bg-blue-600 text-white font-black px-2 py-0.5 rounded-full">x1</span>
+          <span id="shieldCountBadge" class="text-[10px] bg-blue-600 text-white font-black px-2 py-0.5 rounded-full">x2</span>
         </button>
 
         <!-- SHIELD BREAKER PERK -->
-        <button id="breakerPerkBtn" class="bg-red-600/30 border border-red-400/50 rounded-xl p-2.5 flex items-center justify-between transition active:scale-95 shadow-md">
+        <button id="breakerPerkBtn" class="bg-red-600/30 border border-red-400/50 rounded-xl p-2 flex items-center justify-between transition active:scale-95 shadow-md">
           <div class="flex items-center gap-1.5">
-            <span class="text-xl">🔨</span>
+            <span class="text-lg">🔨</span>
             <div class="text-left">
               <span class="text-xs font-black text-red-300 block">Breaker</span>
               <span class="text-[9px] text-gray-300 font-semibold">Smash Shield</span>
             </div>
           </div>
-          <span id="breakerCountBadge" class="text-[10px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full">x1</span>
+          <span id="breakerCountBadge" class="text-[10px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full">x2</span>
         </button>
 
-        <!-- TURBO SPEED PERK -->
-        <button id="turboPerkBtn" class="bg-yellow-600/30 border border-yellow-400/50 rounded-xl p-2.5 flex items-center justify-between transition active:scale-95 shadow-md">
+        <!-- ICE FREEZE PERK -->
+        <button id="freezeRivalsPerkBtn" class="bg-cyan-600/30 border border-cyan-400/50 rounded-xl p-2 flex items-center justify-between transition active:scale-95 shadow-md">
           <div class="flex items-center gap-1.5">
-            <span class="text-xl">⚡</span>
+            <span class="text-lg">❄️</span>
             <div class="text-left">
-              <span class="text-xs font-black text-yellow-300 block">Turbo Speed</span>
-              <span class="text-[9px] text-gray-300 font-semibold">0.5s Cooldown</span>
+              <span class="text-xs font-black text-cyan-300 block">Ice Freeze</span>
+              <span class="text-[9px] text-gray-300 font-semibold">Freeze Rivals 3s</span>
             </div>
           </div>
-          <span id="turboCountBadge" class="text-[10px] bg-yellow-600 text-black font-black px-2 py-0.5 rounded-full">x1</span>
+          <span id="freezeRivalsCountBadge" class="text-[10px] bg-cyan-600 text-white font-black px-2 py-0.5 rounded-full">x2</span>
         </button>
 
-        <!-- TIME FREEZE PERK -->
-        <button id="freezePerkBtn" class="bg-cyan-600/30 border border-cyan-400/50 rounded-xl p-2.5 flex items-center justify-between transition active:scale-95 shadow-md">
+        <!-- TIME SLASHER PERK (-5 SECONDS TO WIN FASTER!) -->
+        <button id="slashTimePerkBtn" class="bg-emerald-600/30 border border-emerald-400/50 rounded-xl p-2 flex items-center justify-between transition active:scale-95 shadow-md">
           <div class="flex items-center gap-1.5">
-            <span class="text-xl">⏱️</span>
+            <span class="text-lg">✂️</span>
             <div class="text-left">
-              <span class="text-xs font-black text-cyan-300 block">Time Boost</span>
-              <span class="text-[9px] text-gray-300 font-semibold">+5s Clock</span>
+              <span class="text-xs font-black text-emerald-300 block">Time Slasher</span>
+              <span class="text-[9px] text-gray-300 font-semibold">-5s to Win!</span>
             </div>
           </div>
-          <span id="freezeCountBadge" class="text-[10px] bg-cyan-600 text-white font-black px-2 py-0.5 rounded-full">x1</span>
+          <span id="slashCountBadge" class="text-[10px] bg-emerald-600 text-white font-black px-2 py-0.5 rounded-full">x2</span>
         </button>
       </div>
 
       <!-- GIANT TAKE CROWN BUTTON -->
-      <button id="actionBtn" class="w-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 hover:from-red-500 hover:to-yellow-300 text-black h-20 rounded-3xl font-black text-3xl tracking-wider shadow-2xl transition active:scale-95 glow-gold">
+      <button id="actionBtn" class="w-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 hover:from-red-500 hover:to-yellow-300 text-black h-18 rounded-3xl font-black text-3xl tracking-wider shadow-2xl transition active:scale-95 glow-gold py-3">
         👑 TAKE CROWN!
       </button>
     </div>
@@ -516,6 +517,17 @@
       setTimeout(() => playBeep(659.25, 'sine', 0.25), 80);
     }
 
+    function playIceSound() {
+      playBeep(1200, 'sine', 0.1);
+      setTimeout(() => playBeep(900, 'triangle', 0.2), 50);
+      setTimeout(() => playBeep(600, 'sine', 0.3), 120);
+    }
+
+    function playSlashSound() {
+      playBeep(700, 'sawtooth', 0.12);
+      setTimeout(() => playBeep(1400, 'sine', 0.2), 60);
+    }
+
     function playWinSound() {
       playBeep(523.25, 'square', 0.15);
       setTimeout(() => playBeep(659.25, 'square', 0.15), 100);
@@ -535,8 +547,8 @@
     let recentPresses = [];
 
     // PERK INVENTORY SYSTEM
-    let perkInventory = { shield: 2, breaker: 2, turbo: 2, freeze: 2 };
-    let activeTurboUntil = 0;
+    let perkInventory = { shield: 2, breaker: 2, freezeRivals: 2, slash: 2 };
+    let frozenUntil = 0;
 
     let config = { timerDurationSec: 30, cooldownMs: 2000, minPlayers: 2 };
     let gameState = {
@@ -777,7 +789,16 @@
         )
         .subscribe();
 
+      // BROADCAST EVENT LISTENERS FOR ICE FREEZE
       channel
+        .on('broadcast', { event: 'ice_freeze_rivals' }, ({ payload }) => {
+          if (payload.userId !== currentUser.id) {
+            frozenUntil = Date.now() + 3000;
+            addPerkLog(`❄️ FROZEN BY ${payload.userName} FOR 3 SECONDS!`);
+            playIceSound();
+            updateUI();
+          }
+        })
         .on('presence', { event: 'sync' }, () => {
           const presenceState = channel.presenceState();
           const activePlayers = {};
@@ -989,11 +1010,11 @@
         </li>
       `).join('');
 
-      // UPDATE PERK BADGES & BUTTON STATES
+      // UPDATE PERK BADGES
       document.getElementById('shieldCountBadge').innerText = `x${perkInventory.shield}`;
       document.getElementById('breakerCountBadge').innerText = `x${perkInventory.breaker}`;
-      document.getElementById('turboCountBadge').innerText = `x${perkInventory.turbo}`;
-      document.getElementById('freezeCountBadge').innerText = `x${perkInventory.freeze}`;
+      document.getElementById('freezeRivalsCountBadge').innerText = `x${perkInventory.freezeRivals}`;
+      document.getElementById('slashCountBadge').innerText = `x${perkInventory.slash}`;
 
       if (screenWinner.classList.contains('hidden') && screenLocked.classList.contains('hidden')) {
         if (gameState.status === 'LOBBY') {
@@ -1008,36 +1029,51 @@
       timerText.innerText = gameState.timerValue;
 
       if (gameState.isShieldActive) {
-        timerContainer.className = 'w-48 h-48 rounded-full border-8 border-blue-500 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-4 transition-all duration-300 glow-blue';
+        timerContainer.className = 'w-48 h-48 rounded-full border-8 border-blue-500 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-3 transition-all duration-300 glow-blue';
       } else if (gameState.timerValue <= 5) {
-        timerContainer.className = 'w-48 h-48 rounded-full border-8 border-red-500 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-4 transition-all duration-300 animate-danger glow-red';
+        timerContainer.className = 'w-48 h-48 rounded-full border-8 border-red-500 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-3 transition-all duration-300 animate-danger glow-red';
         timerText.classList.add('text-red-500');
         if (gameState.status === 'PLAYING') playBeep(440, 'sine', 0.05);
       } else {
-        timerContainer.className = 'w-48 h-48 rounded-full border-8 border-purple-500/50 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-4 transition-all duration-300 glow-neon';
+        timerContainer.className = 'w-48 h-48 rounded-full border-8 border-purple-500/50 bg-black/80 flex flex-col items-center justify-center shadow-2xl relative mb-3 transition-all duration-300 glow-neon';
         timerText.classList.remove('text-red-500');
       }
 
       const actionBtn = document.getElementById('actionBtn');
       const shieldBtn = document.getElementById('shieldPerkBtn');
+      const slashBtn = document.getElementById('slashTimePerkBtn');
 
       if (isLeader && !gameState.isShieldActive && perkInventory.shield > 0) {
         shieldBtn.disabled = false;
-        shieldBtn.className = 'bg-blue-600/40 hover:bg-blue-600/60 border border-blue-400 rounded-xl p-2.5 flex items-center justify-between transition active:scale-95 shadow-md opacity-100 cursor-pointer';
+        shieldBtn.className = 'bg-blue-600/40 hover:bg-blue-600/60 border border-blue-400 rounded-xl p-2 flex items-center justify-between transition active:scale-95 shadow-md opacity-100 cursor-pointer';
       } else {
         shieldBtn.disabled = true;
-        shieldBtn.className = 'bg-gray-800/40 border border-gray-700 rounded-xl p-2.5 flex items-center justify-between transition opacity-40 cursor-not-allowed';
+        shieldBtn.className = 'bg-gray-800/40 border border-gray-700 rounded-xl p-2 flex items-center justify-between transition opacity-40 cursor-not-allowed';
       }
 
-      if (isLeader) {
+      if (isLeader && perkInventory.slash > 0) {
+        slashBtn.disabled = false;
+        slashBtn.className = 'bg-emerald-600/40 hover:bg-emerald-600/60 border border-emerald-400 rounded-xl p-2 flex items-center justify-between transition active:scale-95 shadow-md opacity-100 cursor-pointer';
+      } else {
+        slashBtn.disabled = true;
+        slashBtn.className = 'bg-gray-800/40 border border-gray-700 rounded-xl p-2 flex items-center justify-between transition opacity-40 cursor-not-allowed';
+      }
+
+      const isFrozen = Date.now() < frozenUntil;
+
+      if (isFrozen) {
+        actionBtn.innerText = '❄️ FROZEN! (3s Lock)';
+        actionBtn.disabled = true;
+        actionBtn.className = 'w-full bg-cyan-900/80 text-cyan-200 font-black text-xl tracking-wider h-18 rounded-3xl cursor-not-allowed border-2 border-cyan-400 glow-cyan py-3';
+      } else if (isLeader) {
         actionBtn.innerText = gameState.isShieldActive ? 'PROTECTED BY SHIELD 🛡️' : 'YOU ARE LEADING 👑';
-        actionBtn.className = 'w-full bg-gradient-to-r from-amber-500 to-yellow-400 font-black text-2xl tracking-wider h-20 rounded-3xl shadow-2xl glow-gold text-black';
+        actionBtn.className = 'w-full bg-gradient-to-r from-amber-500 to-yellow-400 font-black text-2xl tracking-wider h-18 rounded-3xl shadow-2xl glow-gold text-black py-3';
       } else if (Date.now() < cooldownUntil) {
         // Cooldown active
       } else {
         actionBtn.innerText = '👑 TAKE CROWN!';
         actionBtn.disabled = false;
-        actionBtn.className = 'w-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 hover:from-red-500 hover:to-yellow-300 text-black h-20 rounded-3xl font-black text-3xl tracking-wider shadow-2xl transition active:scale-95 glow-gold';
+        actionBtn.className = 'w-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 hover:from-red-500 hover:to-yellow-300 text-black h-18 rounded-3xl font-black text-3xl tracking-wider shadow-2xl transition active:scale-95 glow-gold py-3';
       }
     }
 
@@ -1071,30 +1107,45 @@
         playSmashSound();
       } catch (err) {}
 
-      cooldownUntil = Date.now() + (Date.now() < activeTurboUntil ? 500 : config.cooldownMs);
+      cooldownUntil = Date.now() + config.cooldownMs;
       updateUI();
     });
 
-    document.getElementById('turboPerkBtn').addEventListener('click', () => {
-      if (perkInventory.turbo <= 0) return;
-      perkInventory.turbo--;
-      activeTurboUntil = Date.now() + 10000;
-      addPerkLog('⚡ TURBO BOOST ACTIVATED (0.5s Cooldown)!');
-      playBeep(880, 'square', 0.2);
+    // ICE FREEZE RIVALS PERK
+    document.getElementById('freezeRivalsPerkBtn').addEventListener('click', () => {
+      if (perkInventory.freezeRivals <= 0 || gameState.status !== 'PLAYING') return;
+      perkInventory.freezeRivals--;
+
+      const userName = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'Player';
+
+      if (channel) {
+        channel.send({
+          type: 'broadcast',
+          event: 'ice_freeze_rivals',
+          payload: { userId: currentUser.id, userName }
+        });
+      }
+      addPerkLog(`❄️ ${userName} FROZE ALL RIVALS FOR 3 SECONDS!`);
+      playIceSound();
       updateUI();
     });
 
-    document.getElementById('freezePerkBtn').addEventListener('click', async () => {
-      if (perkInventory.freeze <= 0 || gameState.status !== 'PLAYING') return;
-      perkInventory.freeze--;
-      addPerkLog('⏱️ TIME BOOST (+5 Seconds Added)!');
-      playBeep(600, 'triangle', 0.25);
+    // TIME SLASHER PERK (-5 SECONDS TO WIN FASTER!)
+    document.getElementById('slashTimePerkBtn').addEventListener('click', async () => {
+      if (gameState.leaderId !== currentUser?.id || perkInventory.slash <= 0 || gameState.status !== 'PLAYING') return;
+      perkInventory.slash--;
+
+      try {
+        await supabaseClient.rpc('slash_time', { p_user_id: currentUser.id });
+        playSlashSound();
+        addPerkLog(`✂️ SLASHED 5 SECONDS OFF THE CLOCK!`);
+      } catch (e) {}
       updateUI();
     });
 
     // STANDARD CROWN STEAL
     document.getElementById('actionBtn').addEventListener('click', async () => {
-      if (Date.now() < cooldownUntil || gameState.status !== 'PLAYING') return;
+      if (Date.now() < cooldownUntil || Date.now() < frozenUntil || gameState.status !== 'PLAYING') return;
 
       const userName = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'Player';
       const userAvatar = selectedAvatar || '⚡';
@@ -1108,12 +1159,10 @@
         });
       } catch (err) {}
 
-      const effectiveCooldown = Date.now() < activeTurboUntil ? 500 : config.cooldownMs;
-      cooldownUntil = Date.now() + effectiveCooldown;
-
+      cooldownUntil = Date.now() + config.cooldownMs;
       const actionBtn = document.getElementById('actionBtn');
       actionBtn.disabled = true;
-      actionBtn.className = 'w-full bg-gray-800 text-gray-500 font-black text-xl tracking-wider h-20 rounded-3xl cursor-not-allowed';
+      actionBtn.className = 'w-full bg-gray-800 text-gray-500 font-black text-xl tracking-wider h-18 rounded-3xl cursor-not-allowed py-3';
 
       clearInterval(cooldownTimer);
       cooldownTimer = setInterval(() => {
@@ -1158,8 +1207,8 @@
     claimAdRewardBtn.addEventListener('click', () => {
       perkInventory.shield += 2;
       perkInventory.breaker += 2;
-      perkInventory.turbo += 2;
-      perkInventory.freeze += 2;
+      perkInventory.freezeRivals += 2;
+      perkInventory.slash += 2;
 
       adVideoModal.classList.add('hidden');
       playWinSound();
