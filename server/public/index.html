@@ -230,7 +230,7 @@
 
         <div>
           <label class="block text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">Min Players Required</label>
-          <input type="number" id="adminMinPlayersInput" min="1" max="10" value="1"
+          <input type="number" id="adminMinPlayersInput" min="1" max="10" value="2"
             class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-2.5 font-bold text-amber-400 focus:outline-none focus:border-amber-400">
         </div>
 
@@ -282,8 +282,8 @@
     let channel = null;
     let mode = 'SIGN_IN';
 
-    // Game Config & State (100% Cloud Synchronized)
-    let config = { timerDurationSec: 30, cooldownMs: 2000, minPlayers: 1 };
+    // Default configuration (Min players strictly defaults to 2)
+    let config = { timerDurationSec: 30, cooldownMs: 2000, minPlayers: 2 };
     let gameState = {
       status: 'LOBBY',
       leaderId: null,
@@ -383,7 +383,31 @@
       authError.classList.add('hidden');
     });
 
+    // Fetch Admin settings from Supabase database on startup
+    async function fetchSavedCloudConfig() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('game_settings')
+          .select('timer_duration_sec, cooldown_ms, min_players')
+          .eq('id', 'default')
+          .single();
+
+        if (data && !error) {
+          if (data.timer_duration_sec) config.timerDurationSec = Number(data.timer_duration_sec);
+          if (data.cooldown_ms) config.cooldownMs = Number(data.cooldown_ms);
+          if (data.min_players) config.minPlayers = Number(data.min_players);
+
+          document.getElementById('adminTimerInput').value = config.timerDurationSec;
+          document.getElementById('adminCooldownInput').value = config.cooldownMs;
+          document.getElementById('adminMinPlayersInput').value = config.minPlayers;
+        }
+      } catch (err) {
+        console.warn('[CloudConfig] Using default settings:', err);
+      }
+    }
+
     async function checkAuthSession() {
+      await fetchSavedCloudConfig();
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session && session.user) {
         currentUser = session.user;
@@ -424,8 +448,14 @@
           });
           gameState.players = activePlayers;
 
-          if (Object.keys(activePlayers).length >= config.minPlayers && gameState.status === 'LOBBY') {
+          const count = Object.keys(activePlayers).length;
+          if (count >= config.minPlayers && gameState.status === 'LOBBY') {
             startCloudMatch();
+          } else if (count < config.minPlayers && gameState.status === 'PLAYING') {
+            // If active players drop below minPlayers during a match, pause and return to lobby
+            clearInterval(gameLoopInterval);
+            gameState.status = 'LOBBY';
+            showScreen(screenLobby);
           }
           updateUI();
         })
@@ -453,6 +483,14 @@
     }
 
     function startCloudMatch() {
+      const activeCount = Object.keys(gameState.players).length;
+      if (activeCount < config.minPlayers) {
+        gameState.status = 'LOBBY';
+        showScreen(screenLobby);
+        updateUI();
+        return;
+      }
+
       gameState.status = 'PLAYING';
       gameState.timerValue = config.timerDurationSec;
       gameState.leaderId = null;
@@ -479,7 +517,6 @@
       const isWinner = winnerId === currentUser.id;
 
       if (winnerId && gameState.leaderName) {
-        // Record win in Supabase profiles
         try {
           await supabaseClient.rpc('increment_wins', { user_id: winnerId }).catch(() => {});
         } catch (e) {}
@@ -506,6 +543,7 @@
           startCloudMatch();
         } else {
           showScreen(screenLobby);
+          updateUI();
         }
       }, 5000);
     }
@@ -567,6 +605,7 @@
 
     function updateUI() {
       const players = Object.values(gameState.players);
+      const playerCount = players.length;
       const isLeader = gameState.leaderId === currentUser?.id;
 
       if (gameState.leaderName) {
@@ -575,7 +614,11 @@
         document.getElementById('leaderName').innerText = 'NO LEADER';
       }
 
-      document.getElementById('playerCount').innerText = `${players.length} / ${config.minPlayers}`;
+      document.getElementById('playerCount').innerText = `${playerCount} / ${config.minPlayers}`;
+      document.getElementById('lobbyStatusText').innerText = playerCount < config.minPlayers 
+        ? `Waiting for ${config.minPlayers - playerCount} more player(s)...`
+        : 'Starting match...';
+
       document.getElementById('playerList').innerHTML = players.map(p => `
         <li class="py-1.5 px-3 rounded-xl bg-black/30 border border-white/5 flex justify-between items-center ${p.id === currentUser?.id ? 'text-red-400 font-bold border-red-500/40' : 'text-gray-300'}">
           <span>${p.name} ${p.id === currentUser?.id ? '(You)' : ''}</span>
@@ -584,8 +627,11 @@
       `).join('');
 
       if (screenWinner.classList.contains('hidden') && screenLocked.classList.contains('hidden')) {
-        if (gameState.status === 'LOBBY') showScreen(screenLobby);
-        else if (gameState.status === 'PLAYING') showScreen(screenGame);
+        if (gameState.status === 'LOBBY' || playerCount < config.minPlayers) {
+          showScreen(screenLobby);
+        } else if (gameState.status === 'PLAYING') {
+          showScreen(screenGame);
+        }
       }
 
       const timerText = document.getElementById('timerText');
@@ -622,7 +668,6 @@
       gameState.leaderName = userName;
       gameState.timerValue = config.timerDurationSec;
 
-      // Broadcast crown steal across Supabase Cloud Realtime
       if (channel) {
         channel.send({
           type: 'broadcast',
@@ -690,7 +735,7 @@
     adminPanelBtn.addEventListener('click', () => adminModal.classList.remove('hidden'));
     closeAdminModal.addEventListener('click', () => adminModal.classList.add('hidden'));
 
-    saveAdminSettingsBtn.addEventListener('click', () => {
+    saveAdminSettingsBtn.addEventListener('click', async () => {
       if (!currentUser || currentUser.email !== 'shimri86@gmail.com') return;
 
       const timerDurationSec = Number(document.getElementById('adminTimerInput').value);
@@ -700,6 +745,22 @@
       config.timerDurationSec = timerDurationSec;
       config.cooldownMs = cooldownMs;
       config.minPlayers = minPlayers;
+
+      // Save to Supabase game_settings table
+      try {
+        await supabaseClient
+          .from('game_settings')
+          .update({
+            timer_duration_sec: timerDurationSec,
+            cooldown_ms: cooldownMs,
+            min_players: minPlayers,
+            updated_by: currentUser.email,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', 'default');
+      } catch (err) {
+        console.warn('[Admin] Failed to update game_settings table:', err);
+      }
 
       if (channel) {
         channel.send({
