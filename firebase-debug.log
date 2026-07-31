@@ -1,0 +1,36 @@
+[debug] [2026-07-31T15:07:51.470Z] ----------------------------------------------------------------------
+[debug] [2026-07-31T15:07:51.474Z] Command:       C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting --project countdown-game-app
+[debug] [2026-07-31T15:07:51.474Z] CLI Version:   15.6.0
+[debug] [2026-07-31T15:07:51.475Z] Platform:      win32
+[debug] [2026-07-31T15:07:51.475Z] Node Version:  v20.19.0
+[debug] [2026-07-31T15:07:51.476Z] Time:          Fri Jul 31 2026 18:07:51 GMT+0300 (Israel Daylight Time)
+[debug] [2026-07-31T15:07:51.478Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-31T15:07:54.833Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-31T15:07:54.833Z] > authorizing via signed-in user (shimri86@gmail.com)
+[debug] [2026-07-31T15:07:54.833Z] [iam] checking project countdown-game-app for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-07-31T15:07:54.835Z] Checked if tokens are valid: false, expires at: 1785509368277
+[debug] [2026-07-31T15:07:54.835Z] Checked if tokens are valid: false, expires at: 1785509368277
+[debug] [2026-07-31T15:07:54.835Z] > refreshing access token with scopes: []
+[debug] [2026-07-31T15:07:54.837Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-31T15:07:54.838Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-31T15:07:55.070Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-31T15:07:55.070Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-31T15:07:55.102Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/countdown-game-app:testIamPermissions [none]
+[debug] [2026-07-31T15:07:55.102Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/countdown-game-app:testIamPermissions  x-goog-user-project=countdown-game-app
+[debug] [2026-07-31T15:07:55.102Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/countdown-game-app:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-07-31T15:07:56.163Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/countdown-game-app:testIamPermissions 200
+[debug] [2026-07-31T15:07:56.163Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/countdown-game-app:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-07-31T15:07:56.164Z] Checked if tokens are valid: true, expires at: 1785514074070
+[debug] [2026-07-31T15:07:56.165Z] Checked if tokens are valid: true, expires at: 1785514074070
+[debug] [2026-07-31T15:07:56.165Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/countdown-game-app [none]
+[debug] [2026-07-31T15:07:56.580Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/countdown-game-app 200
+[debug] [2026-07-31T15:07:56.580Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/countdown-game-app {"projectId":"countdown-game-app","projectNumber":"326051837922","displayName":"COUNTDOWN Game","name":"projects/countdown-game-app","resources":{"hostingSite":"countdown-game-app"},"state":"ACTIVE","labels":{"firebase":"enabled"},"etag":"1_0c15e391-186f-42bc-8091-03f2bd1803f4"}
+[info] 
+[info] === Deploying to 'countdown-game-app'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2026-07-31T15:07:56.593Z] Checked if tokens are valid: true, expires at: 1785514074070
+[debug] [2026-07-31T15:07:56.593Z] Checked if tokens are valid: true, expires at: 1785514074070
+[debug] [2026-07-31T15:07:56.593Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/countdown-game-app/versions [none]
+[debug] [2026-07-31T15:07:56.593Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/countdown-game-app/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}

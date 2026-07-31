@@ -808,7 +808,7 @@
           gameState.players = activePlayers;
 
           const count = Object.keys(activePlayers).length;
-          if (count >= config.minPlayers && gameState.status === 'LOBBY') {
+          if (count >= config.minPlayers && (gameState.status === 'LOBBY' || !gameState.endsAt)) {
             startCloudMatch();
           }
 
@@ -863,6 +863,12 @@
         showScreen(screenLobby);
         updateUI();
         return;
+      }
+
+      try {
+        await supabaseClient.rpc('start_match');
+      } catch (err) {
+        console.warn('[StartMatch] RPC Error:', err);
       }
 
       gameState.status = 'PLAYING';
