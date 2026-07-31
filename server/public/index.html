@@ -310,7 +310,7 @@
     let currentUser = null;
     let channel = null;
     let mode = 'SIGN_IN';
-    let recentPresses = []; // Store activity timeline
+    let recentPresses = [];
 
     let config = { timerDurationSec: 30, cooldownMs: 2000, minPlayers: 2 };
     let gameState = {
@@ -457,6 +457,7 @@
       showScreen(screenLobby);
     }
 
+    // 100% SUPABASE CLOUD REALTIME WEBSOCKET CONNECTION
     function initSupabaseCloudRealtime(playerName) {
       channel = supabaseClient.channel('countdown-global-room', {
         config: { presence: { key: currentUser.id } }
@@ -473,13 +474,19 @@
           gameState.players = activePlayers;
 
           const count = Object.keys(activePlayers).length;
+
+          // If a match is in progress, DO NOT RESET IT when a player leaves!
+          // Only start a match if we are in LOBBY state and have enough players.
           if (count >= config.minPlayers && gameState.status === 'LOBBY') {
             startCloudMatch();
-          } else if (count < config.minPlayers && gameState.status === 'PLAYING') {
-            clearInterval(gameLoopInterval);
-            gameState.status = 'LOBBY';
-            showScreen(screenLobby);
           }
+
+          // If current crown holder disconnected mid-game, reset crown to NO LEADER
+          if (gameState.status === 'PLAYING' && gameState.leaderId && !activePlayers[gameState.leaderId]) {
+            gameState.leaderId = null;
+            gameState.leaderName = null;
+          }
+
           updateUI();
         })
         .on('broadcast', { event: 'steal_crown' }, ({ payload }) => {
@@ -487,7 +494,6 @@
           gameState.leaderName = payload.userName;
           gameState.timerValue = config.timerDurationSec;
           
-          // Log into live activity feed
           addActivityFeedLog(payload.userName, payload.timeStr);
           playStealSound();
           updateUI();
@@ -583,6 +589,8 @@
         gameState.timerValue = config.timerDurationSec;
         gameState.leaderId = null;
         gameState.leaderName = null;
+
+        // Check if remaining players meet min requirement for NEXT round
         if (Object.keys(gameState.players).length >= config.minPlayers) {
           startCloudMatch();
         } else {
@@ -629,7 +637,6 @@
           authError.classList.remove('hidden');
         } else if (data.user) {
           currentUser = data.user;
-          // Update username metadata if specified
           if (username) {
             await supabaseClient.auth.updateUser({ data: { username } });
             currentUser.user_metadata.username = username;
@@ -678,9 +685,10 @@
       `).join('');
 
       if (screenWinner.classList.contains('hidden') && screenLocked.classList.contains('hidden')) {
-        if (gameState.status === 'LOBBY' || playerCount < config.minPlayers) {
+        if (gameState.status === 'LOBBY') {
           showScreen(screenLobby);
         } else if (gameState.status === 'PLAYING') {
+          // STATEFUL GUARANTEE: Keep showing gameplay screen once PLAYING, regardless of disconnects!
           showScreen(screenGame);
         }
       }
@@ -776,7 +784,6 @@
         userBadgeName.innerText = newNickname;
         nicknameModal.classList.add('hidden');
 
-        // Re-track presence with new nickname
         if (channel) {
           await channel.track({
             id: currentUser.id,
