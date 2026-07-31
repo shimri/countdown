@@ -74,7 +74,7 @@
     <!-- AUTHENTICATION SCREEN -->
     <div id="screenAuth" class="w-full glass rounded-3xl p-8 flex flex-col items-center shadow-2xl">
       <h2 class="text-2xl font-bold mb-1">Enter Cloud Arena</h2>
-      <p class="text-gray-400 text-xs mb-6 text-center">Sign in or register with your custom nickname to play on Supabase.</p>
+      <p class="text-gray-400 text-xs mb-6 text-center">Sign in or register to play 100% Cloud Multiplayer on Supabase.</p>
 
       <div class="w-full grid grid-cols-2 bg-black/40 p-1 rounded-xl mb-6 text-xs font-bold text-center">
         <button id="tabSignIn" class="py-2.5 rounded-lg bg-red-600 text-white shadow">SIGN IN</button>
@@ -82,7 +82,8 @@
       </div>
 
       <div id="authForm" class="w-full flex flex-col items-center">
-        <div id="usernameWrapper" class="w-full">
+        <!-- Nickname field ONLY visible on SIGN UP -->
+        <div id="usernameWrapper" class="w-full hidden">
           <input type="text" id="usernameInput" placeholder="Choose Display Nickname" maxlength="15"
             class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold focus:outline-none focus:border-red-500 transition mb-3 text-white">
         </div>
@@ -335,6 +336,7 @@
 
     const tabSignIn = document.getElementById('tabSignIn');
     const tabSignUp = document.getElementById('tabSignUp');
+    const usernameWrapper = document.getElementById('usernameWrapper');
     const submitAuthBtn = document.getElementById('submitAuthBtn');
     const authError = document.getElementById('authError');
 
@@ -391,19 +393,23 @@
       }
     }
 
+    // SIGN IN TAB: Hide Nickname box (Nickname is loaded automatically from profile)
     tabSignIn.addEventListener('click', () => {
       mode = 'SIGN_IN';
       tabSignIn.className = 'py-2.5 rounded-lg bg-red-600 text-white shadow';
       tabSignUp.className = 'py-2.5 rounded-lg text-gray-400 hover:text-white';
+      usernameWrapper.classList.add('hidden');
       passwordValidationWrapper.classList.add('hidden');
       submitAuthBtn.innerText = 'SIGN IN TO PLAY';
       authError.classList.add('hidden');
     });
 
+    // SIGN UP TAB: Show Choose Display Nickname box
     tabSignUp.addEventListener('click', () => {
       mode = 'SIGN_UP';
       tabSignUp.className = 'py-2.5 rounded-lg bg-red-600 text-white shadow';
       tabSignIn.className = 'py-2.5 rounded-lg text-gray-400 hover:text-white';
+      usernameWrapper.classList.remove('hidden');
       if (passwordInput.value.length > 0) passwordValidationWrapper.classList.remove('hidden');
       submitAuthBtn.innerText = 'CREATE ACCOUNT & PLAY';
       authError.classList.add('hidden');
@@ -474,10 +480,6 @@
           gameState.players = activePlayers;
 
           const count = Object.keys(activePlayers).length;
-
-          // PERSISTENT CROWN ON DISCONNECT:
-          // We DO NOT reset leaderId or leaderName when a player disconnects!
-          // The player holds the crown even if they disconnect, unless another active player steals it!
           if (count >= config.minPlayers && gameState.status === 'LOBBY') {
             startCloudMatch();
           }
@@ -599,7 +601,7 @@
     submitAuthBtn.addEventListener('click', async () => {
       const email = document.getElementById('emailInput').value.trim();
       const password = passwordInput.value.trim();
-      const username = document.getElementById('usernameInput').value.trim() || email.split('@')[0];
+      const username = document.getElementById('usernameInput').value.trim();
 
       if (!email || !password) {
         authError.innerText = 'Please enter your email and password.';
@@ -615,7 +617,7 @@
         }
 
         const { data, error } = await supabaseClient.auth.signUp({
-          email, password, options: { data: { username } }
+          email, password, options: { data: { username: username || email.split('@')[0] } }
         });
         if (error) {
           authError.innerText = error.message;
@@ -625,16 +627,13 @@
           onUserAuthenticated();
         }
       } else {
+        // SIGN IN: Only requires Email and Password. Nickname is loaded automatically!
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
           authError.innerText = error.message;
           authError.classList.remove('hidden');
         } else if (data.user) {
           currentUser = data.user;
-          if (username) {
-            await supabaseClient.auth.updateUser({ data: { username } });
-            currentUser.user_metadata.username = username;
-          }
           onUserAuthenticated();
         }
       }
