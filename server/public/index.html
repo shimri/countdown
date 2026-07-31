@@ -77,7 +77,7 @@
             <h1 class="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-amber-400 to-yellow-200">
               COUNTDOWN
             </h1>
-            <span class="text-[9px] font-extrabold tracking-widest text-purple-400 uppercase block -mt-1">CLOUD ARCADE ARENA</span>
+            <span class="text-[9px] font-extrabold tracking-widest text-purple-400 uppercase block -mt-1">SUPABASE POSTGRES ENGINE</span>
           </div>
         </div>
 
@@ -263,7 +263,7 @@
 
   <!-- FOOTER NAVIGATION -->
   <footer class="w-full max-w-md text-center pb-3 text-xs text-gray-500 flex justify-between items-center z-10">
-    <span class="font-bold text-purple-400/80">⚡ 100% Cloud Arcade</span>
+    <span class="font-bold text-purple-400/80">⚡ 100% Postgres DB Engine</span>
     <button id="leaderboardBtn" class="text-amber-400 hover:underline font-extrabold text-sm flex items-center gap-1">
       🏆 Leaderboard
     </button>
@@ -431,7 +431,7 @@
       setTimeout(() => playBeep(1046.50, 'triangle', 0.5), 320);
     }
 
-    // 100% SUPABASE CLOUD ENGINE CONFIG
+    // 100% SUPABASE POSTGRES DB ENGINE CONFIG
     const SUPABASE_URL = 'https://ughcjatkftijiwlcukkn.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnaGNqYXRrZnRpaml3bGN1a2tuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0ODk5MDksImV4cCI6MjEwMTA2NTkwOX0.kXDvuaZeLndvIToabAltAFSBIDiEX3MgPv-M4A8sHhw';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -441,7 +441,6 @@
     let mode = 'SIGN_IN';
     let selectedAvatar = '⚡';
     let recentPresses = [];
-    let currentMatchId = null;
 
     let config = { timerDurationSec: 30, cooldownMs: 2000, minPlayers: 2 };
     let gameState = {
@@ -449,6 +448,7 @@
       leaderId: null,
       leaderName: null,
       leaderAvatar: '👑',
+      endsAt: null,
       timerValue: 30,
       players: {}
     };
@@ -481,12 +481,6 @@
     const strengthBar = document.getElementById('strengthBar');
     const ruleLength = document.getElementById('ruleLength');
     const ruleNumber = document.getElementById('ruleNumber');
-
-    // Helper: Determine if this client is the designated Host Referee
-    function isHostReferee() {
-      const playerIds = Object.keys(gameState.players).sort();
-      return playerIds.length > 0 && playerIds[0] === currentUser?.id;
-    }
 
     document.querySelectorAll('.avatar-opt').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -587,9 +581,35 @@
           document.getElementById('adminCooldownInput').value = config.cooldownMs;
           document.getElementById('adminMinPlayersInput').value = config.minPlayers;
         }
+
+        // Fetch current active_match row from PostgreSQL
+        const { data: matchData } = await supabaseClient
+          .from('active_match')
+          .select('*')
+          .eq('id', 'global')
+          .single();
+
+        if (matchData) {
+          syncStateFromDB(matchData);
+        }
       } catch (err) {
-        console.warn('[CloudConfig] Using default settings:', err);
+        console.warn('[CloudConfig] DB Sync:', err);
       }
+    }
+
+    function syncStateFromDB(row) {
+      if (!row) return;
+      gameState.status = row.status || 'LOBBY';
+      gameState.leaderId = row.leader_id;
+      gameState.leaderName = row.leader_name;
+      gameState.leaderAvatar = row.leader_avatar || '👑';
+      gameState.endsAt = row.ends_at;
+
+      if (row.ends_at && gameState.status === 'PLAYING') {
+        const remaining = Math.max(0, Math.ceil((new Date(row.ends_at) - new Date()) / 1000));
+        gameState.timerValue = remaining;
+      }
+      updateUI();
     }
 
     async function checkAuthSession() {
@@ -622,11 +642,31 @@
       showScreen(screenLobby);
     }
 
-    // 100% SUPABASE CLOUD REALTIME WEBSOCKET CONNECTION
+    // 100% SUPABASE POSTGRES DB REALTIME ENGINE
     function initSupabaseCloudRealtime(playerName, playerAvatar) {
       channel = supabaseClient.channel('countdown-global-room', {
         config: { presence: { key: currentUser.id } }
       });
+
+      // LISTEN TO POSTGRESQL DB CHANGES FOR SINGLE SOURCE OF TRUTH!
+      supabaseClient
+        .channel('active_match_db_changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'active_match' },
+          (payload) => {
+            if (payload.new) {
+              const oldLeader = gameState.leaderId;
+              syncStateFromDB(payload.new);
+
+              if (payload.new.leader_name && payload.new.leader_id !== oldLeader) {
+                addActivityFeedLog(payload.new.leader_name, payload.new.leader_avatar);
+                playStealSound();
+              }
+            }
+          }
+        )
+        .subscribe();
 
       channel
         .on('presence', { event: 'sync' }, () => {
@@ -643,28 +683,6 @@
             startCloudMatch();
           }
 
-          updateUI();
-        })
-        .on('broadcast', { event: 'steal_crown' }, ({ payload }) => {
-          // Reject steals if match is not actively PLAYING or if payload is for an old match
-          if (gameState.status !== 'PLAYING') return;
-          if (payload.matchId && payload.matchId !== currentMatchId) return;
-
-          gameState.leaderId = payload.userId;
-          gameState.leaderName = payload.userName;
-          gameState.leaderAvatar = payload.userAvatar || '👑';
-          
-          addActivityFeedLog(payload.userName, payload.userAvatar, payload.timeStr);
-          playStealSound();
-          updateUI();
-        })
-        .on('broadcast', { event: 'match_ended' }, ({ payload }) => {
-          // SINGLE AUTHORITATIVE WINNER BROADCAST RECEIVER
-          if (gameState.status === 'WINNER_REVEALED') return;
-          triggerWinnerReveal(payload.winnerId, payload.winnerName, payload.winnerAvatar);
-        })
-        .on('broadcast', { event: 'config_update' }, ({ payload }) => {
-          config = { ...config, ...payload };
           updateUI();
         })
         .subscribe(async (status) => {
@@ -697,7 +715,7 @@
       }
     }
 
-    function startCloudMatch() {
+    async function startCloudMatch() {
       const activeCount = Object.keys(gameState.players).length;
       if (activeCount < config.minPlayers) {
         gameState.status = 'LOBBY';
@@ -706,37 +724,18 @@
         return;
       }
 
-      currentMatchId = 'match_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       gameState.status = 'PLAYING';
-      gameState.timerValue = config.timerDurationSec;
-      gameState.leaderId = null;
-      gameState.leaderName = null;
-      gameState.leaderAvatar = '👑';
       recentPresses = [];
       document.getElementById('activityFeed').innerHTML = '<p class="text-gray-500 text-center py-1">Waiting for first crown steal...</p>';
 
       clearInterval(gameLoopInterval);
       gameLoopInterval = setInterval(() => {
-        if (gameState.status === 'PLAYING') {
-          gameState.timerValue--;
-          
-          // HOST REFEREE RESPONSIBILITY: Broadcast match_ended when clock hits 0
-          if (gameState.timerValue <= 0) {
-            if (isHostReferee()) {
-              if (channel) {
-                channel.send({
-                  type: 'broadcast',
-                  event: 'match_ended',
-                  payload: {
-                    winnerId: gameState.leaderId,
-                    winnerName: gameState.leaderName,
-                    winnerAvatar: gameState.leaderAvatar,
-                    matchId: currentMatchId
-                  }
-                });
-              }
-              triggerWinnerReveal(gameState.leaderId, gameState.leaderName, gameState.leaderAvatar);
-            }
+        if (gameState.status === 'PLAYING' && gameState.endsAt) {
+          const remaining = Math.max(0, Math.ceil((new Date(gameState.endsAt) - new Date()) / 1000));
+          gameState.timerValue = remaining;
+
+          if (remaining <= 0) {
+            triggerWinnerReveal(gameState.leaderId, gameState.leaderName, gameState.leaderAvatar);
           } else {
             updateUI();
           }
@@ -901,28 +900,24 @@
       }
     }
 
+    // ATOMIC DB TRANSACTION RPC CALL FOR STEALING CROWN
     document.getElementById('actionBtn').addEventListener('click', async () => {
-      if (Date.now() < cooldownUntil || gameState.status !== 'PLAYING' || gameState.timerValue <= 0) return;
+      if (Date.now() < cooldownUntil || gameState.status !== 'PLAYING') return;
 
       const userName = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'Player';
       const userAvatar = selectedAvatar || '⚡';
-      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-      gameState.leaderId = currentUser.id;
-      gameState.leaderName = userName;
-      gameState.leaderAvatar = userAvatar;
-
-      addActivityFeedLog(userName, userAvatar, timeStr);
-
-      if (channel) {
-        channel.send({
-          type: 'broadcast',
-          event: 'steal_crown',
-          payload: { userId: currentUser.id, userName, userAvatar, timeStr, matchId: currentMatchId }
+      // Atomic PostgreSQL DB Stored Procedure Call
+      try {
+        await supabaseClient.rpc('steal_crown', {
+          p_user_id: currentUser.id,
+          p_user_name: userName,
+          p_user_avatar: userAvatar
         });
+      } catch (err) {
+        console.warn('[Postgres RPC] steal_crown error:', err);
       }
 
-      playStealSound();
       cooldownUntil = Date.now() + config.cooldownMs;
       const actionBtn = document.getElementById('actionBtn');
       actionBtn.disabled = true;
@@ -1049,15 +1044,7 @@
         console.warn('[Admin] Failed to update game_settings table:', err);
       }
 
-      if (channel) {
-        channel.send({
-          type: 'broadcast',
-          event: 'config_update',
-          payload: config
-        });
-      }
-
-      adminStatusMsg.innerText = '✅ Settings saved & broadcasted on Supabase Cloud!';
+      adminStatusMsg.innerText = '✅ Settings saved to Supabase Postgres!';
       adminStatusMsg.className = 'text-xs text-center font-bold text-emerald-400';
       adminStatusMsg.classList.remove('hidden');
       updateUI();
