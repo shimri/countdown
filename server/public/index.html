@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>COUNTDOWN — Realtime Multiplayer Web App Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google AdSense / AdMob Script -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3940256099942544" crossorigin="anonymous"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: radial-gradient(circle at center, #1e1b2e 0%, #0b0914 100%);
+    }
+    .glow-red { box-shadow: 0 0 60px rgba(239, 68, 68, 0.45); }
+    .glow-gold { box-shadow: 0 0 60px rgba(245, 158, 11, 0.55); }
+    .glass {
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    @keyframes pulse-timer {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(239,68,68,0.8)); }
+      50% { transform: scale(1.08); filter: drop-shadow(0 0 40px rgba(239,68,68,1)); }
+    }
+    .animate-danger { animation: pulse-timer 0.5s infinite ease-in-out; }
+    
+    @keyframes crown-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .crown-bounce { animation: crown-bounce 1.5s infinite ease-in-out; }
+  </style>
+</head>
+<body class="min-h-screen text-white flex flex-col justify-between items-center p-4 select-none overflow-x-hidden">
+
+  <!-- TOP HEADER -->
+  <header class="w-full max-w-md text-center pt-3">
+    <div class="flex justify-between items-center mb-3">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl crown-bounce">👑</span>
+        <h1 class="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-amber-400 to-amber-200">
+          COUNTDOWN
+        </h1>
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <button id="adminPanelBtn" class="hidden text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 px-3 py-1.5 rounded-full font-bold hover:bg-amber-500/30 transition">
+          ⚙️ Admin Panel
+        </button>
+        <div id="userBadge" class="hidden text-xs bg-black/50 border border-gray-800 px-3 py-1.5 rounded-full flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="userBadgeName" class="font-bold text-gray-300"></span>
+          <button id="logoutBtn" class="text-gray-500 hover:text-red-400 ml-1 text-xs font-semibold">Exit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CROWN HOLDER DISPLAY -->
+    <div id="leaderBanner" class="glass rounded-2xl py-3.5 px-6 shadow-2xl transition-all duration-300">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Current Crown Holder</p>
+      <p id="leaderName" class="text-xl font-extrabold text-amber-400 mt-0.5 tracking-wide">NO LEADER</p>
+    </div>
+  </header>
+
+  <!-- MAIN GAME SCREEN CONTAINER -->
+  <main id="app" class="w-full max-w-md flex flex-col items-center justify-center my-auto">
+    
+    <!-- AUTHENTICATION SCREEN -->
+    <div id="screenAuth" class="w-full glass rounded-3xl p-8 flex flex-col items-center shadow-2xl">
+      <h2 class="text-2xl font-bold mb-1">Enter Web Arena</h2>
+      <p class="text-gray-400 text-xs mb-6 text-center">Sign in or register to record your wins & leaderboard rank on Supabase.</p>
+
+      <div class="w-full grid grid-cols-2 bg-black/40 p-1 rounded-xl mb-6 text-xs font-bold text-center">
+        <button id="tabSignIn" class="py-2.5 rounded-lg bg-red-600 text-white shadow">SIGN IN</button>
+        <button id="tabSignUp" class="py-2.5 rounded-lg text-gray-400 hover:text-white">CREATE ACCOUNT</button>
+      </div>
+
+      <div id="authForm" class="w-full flex flex-col items-center">
+        <div id="usernameWrapper" class="w-full hidden">
+          <input type="text" id="usernameInput" placeholder="Choose a Username" maxlength="12"
+            class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold focus:outline-none focus:border-red-500 transition mb-3 text-white">
+        </div>
+
+        <input type="email" id="emailInput" placeholder="Email address"
+          class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold focus:outline-none focus:border-red-500 transition mb-3 text-white">
+        
+        <div class="relative w-full mb-2">
+          <input type="password" id="passwordInput" placeholder="Password"
+            class="w-full bg-black/50 border border-gray-700 rounded-xl pl-4 pr-12 py-3.5 text-sm font-semibold focus:outline-none focus:border-red-500 transition text-white">
+          <button type="button" id="togglePasswordBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1">
+            <svg id="eyeIconShow" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <svg id="eyeIconHide" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.04 10.04 0 013.98.813c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21m-4.22-4.22L3 3" />
+            </svg>
+          </button>
+        </div>
+
+        <div id="passwordValidationWrapper" class="w-full mb-4 space-y-1.5 text-xs text-left hidden">
+          <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden mb-2">
+            <div id="strengthBar" class="h-full bg-red-500 w-0 transition-all duration-300"></div>
+          </div>
+          <div class="flex items-center gap-1.5 text-gray-400" id="ruleLength">
+            <span class="rule-icon text-xs">❌</span> At least 6 characters
+          </div>
+          <div class="flex items-center gap-1.5 text-gray-400" id="ruleNumber">
+            <span class="rule-icon text-xs">❌</span> Contains a number or symbol
+          </div>
+        </div>
+
+        <button id="submitAuthBtn" class="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 font-black text-lg py-4 rounded-xl shadow-lg transition active:scale-95">
+          SIGN IN TO PLAY
+        </button>
+      </div>
+
+      <p id="authError" class="text-xs text-red-400 mt-4 text-center hidden"></p>
+    </div>
+
+    <!-- LOBBY SCREEN -->
+    <div id="screenLobby" class="w-full glass rounded-3xl p-8 flex flex-col items-center shadow-2xl hidden">
+      <h2 class="text-xl font-bold tracking-wider text-gray-300 mb-6">WAITING FOR PLAYERS</h2>
+      
+      <div class="w-44 h-44 rounded-full border-4 border-red-500/30 flex flex-col items-center justify-center bg-black/40 glow-red mb-6">
+        <span id="playerCount" class="text-5xl font-black text-red-500">1 / 2</span>
+        <span class="text-xs text-gray-400 tracking-widest mt-1">PLAYERS</span>
+      </div>
+
+      <p id="lobbyStatusText" class="text-sm text-gray-400 mb-6">Waiting for 1 more player...</p>
+
+      <div class="w-full border-t border-gray-800 pt-4 mb-4">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Lobby Players</p>
+        <ul id="playerList" class="space-y-2 text-sm text-center"></ul>
+      </div>
+
+      <!-- ADMOB BANNER SLOT -->
+      <div class="w-full border-t border-gray-800/80 pt-3 flex flex-col items-center">
+        <span class="text-[10px] text-gray-500 font-semibold tracking-widest mb-1">SPONSORED ADMOB AD</span>
+        <div class="w-full h-14 bg-black/40 border border-gray-800 rounded-xl flex items-center justify-center text-xs text-amber-400/80 font-mono">
+          📢 Google AdMob Banner Slot (320x50)
+        </div>
+      </div>
+    </div>
+
+    <!-- GAMEPLAY SCREEN -->
+    <div id="screenGame" class="w-full flex flex-col items-center hidden">
+      <div id="timerContainer" class="w-64 h-64 rounded-full border-8 border-gray-800 bg-black/70 flex flex-col items-center justify-center shadow-2xl relative mb-10 transition-all duration-300">
+        <span id="timerText" class="text-7xl font-black tracking-tighter">30</span>
+        <span class="text-xs text-gray-500 tracking-widest font-semibold mt-1">SECONDS</span>
+      </div>
+
+      <button id="actionBtn" class="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 h-24 rounded-3xl font-black text-2xl tracking-wider shadow-2xl transition active:scale-95 glow-red">
+        TAKE CROWN
+      </button>
+    </div>
+
+    <!-- WINNER SCREEN -->
+    <div id="screenWinner" class="w-full glass rounded-3xl p-8 flex flex-col items-center text-center shadow-2xl hidden">
+      <div class="text-5xl mb-2 crown-bounce">🏆</div>
+      <p class="text-xs font-bold tracking-widest text-gray-400 mb-1">MATCH FINISHED</p>
+      <h2 id="winnerText" class="text-4xl font-black text-amber-400 mb-2">YOU WON!</h2>
+      <p class="text-gray-300 text-sm mb-6">Held the crown when time expired.</p>
+
+      <div class="w-full bg-black/40 border border-amber-500/30 rounded-xl p-3 mb-4 text-xs text-center">
+        <p class="text-amber-400 font-bold mb-1">🎁 Watch Reward Ad</p>
+        <p class="text-gray-400 text-[11px]">Watch a short video ad to double your match points!</p>
+      </div>
+
+      <p class="text-xs text-gray-500 animate-pulse">Returning to lobby...</p>
+    </div>
+
+    <!-- LOCKED SCREEN -->
+    <div id="screenLocked" class="w-full glass border-red-500/50 bg-red-950/40 rounded-3xl p-8 flex flex-col items-center text-center shadow-2xl hidden">
+      <div class="text-5xl mb-4">🚨</div>
+      <h2 class="text-3xl font-black text-red-500 mb-2">ACCOUNT LOCKED</h2>
+      <p class="text-gray-300 text-sm mb-4">Immediate security policy enforcement triggered.</p>
+      <p id="lockReasonText" class="text-xs font-mono bg-black/50 text-red-300 px-4 py-2 rounded-lg border border-red-900/50"></p>
+    </div>
+
+  </main>
+
+  <!-- FOOTER NAVIGATION -->
+  <footer class="w-full max-w-md text-center pb-4 text-xs text-gray-500 flex justify-between items-center">
+    <span>Supabase Web App</span>
+    <button id="leaderboardBtn" class="text-amber-400 hover:underline font-semibold">🏆 Leaderboard</button>
+  </footer>
+
+  <!-- LEADERBOARD MODAL -->
+  <div id="leaderboardModal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
+    <div class="glass w-full max-w-md rounded-3xl p-6 relative">
+      <button id="closeModal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+      <h3 class="text-xl font-black text-amber-400 mb-4 flex items-center gap-2">
+        🏆 Global Leaderboard <span class="text-xs font-normal text-gray-400">(Supabase)</span>
+      </h3>
+      <div class="space-y-2 max-h-60 overflow-y-auto" id="leaderboardRows">
+        <p class="text-gray-500 text-center py-4">Loading stats...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD MODAL -->
+  <div id="adminModal" class="fixed inset-0 bg-black/85 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+    <div class="glass border-amber-500/40 w-full max-w-md rounded-3xl p-6 relative shadow-2xl">
+      <button id="closeAdminModal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+      
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-2xl">⚙️</span>
+        <div>
+          <h3 class="text-xl font-black text-amber-400">Admin Dashboard</h3>
+          <p class="text-xs text-gray-400">Owner Access: <span class="text-amber-300 font-mono">shimri86@gmail.com</span></p>
+        </div>
+      </div>
+
+      <div class="space-y-4 text-sm text-left">
+        <div>
+          <label class="block text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">Round Timer (Seconds)</label>
+          <input type="number" id="adminTimerInput" min="5" max="300" value="30"
+            class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-2.5 font-bold text-amber-400 focus:outline-none focus:border-amber-400">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">Button Cooldown (Milliseconds)</label>
+          <input type="number" id="adminCooldownInput" min="500" max="10000" step="500" value="2000"
+            class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-2.5 font-bold text-amber-400 focus:outline-none focus:border-amber-400">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">Min Players Required</label>
+          <input type="number" id="adminMinPlayersInput" min="1" max="10" value="2"
+            class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-2.5 font-bold text-amber-400 focus:outline-none focus:border-amber-400">
+        </div>
+
+        <button id="saveAdminSettingsBtn" class="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black py-3.5 rounded-xl shadow-lg hover:from-amber-400 hover:to-yellow-300 transition active:scale-95">
+          SAVE & BROADCAST SETTINGS
+        </button>
+
+        <p id="adminStatusMsg" class="text-xs text-center hidden font-bold"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // WEB AUDIO SOUND SYNTHESIZER
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playBeep(freq, type = 'sine', duration = 0.1) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playStealSound() {
+      playBeep(587.33, 'triangle', 0.12);
+      setTimeout(() => playBeep(880, 'sine', 0.2), 80);
+    }
+
+    function playWinSound() {
+      playBeep(523.25, 'triangle', 0.15);
+      setTimeout(() => playBeep(659.25, 'triangle', 0.15), 120);
+      setTimeout(() => playBeep(783.99, 'triangle', 0.15), 240);
+      setTimeout(() => playBeep(1046.50, 'triangle', 0.4), 360);
+    }
+
+    const SUPABASE_URL = 'https://ughcjatkftijiwlcukkn.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnaGNqYXRrZnRpaml3bGN1a2tuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0ODk5MDksImV4cCI6MjEwMTA2NTkwOX0.kXDvuaZeLndvIToabAltAFSBIDiEX3MgPv-M4A8sHhw';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const socket = io();
+    let myId = null;
+    let currentUser = null;
+    let gameState = null;
+    let cooldownUntil = 0;
+    let cooldownTimer = null;
+    let mode = 'SIGN_IN';
+
+    const screenAuth = document.getElementById('screenAuth');
+    const screenLobby = document.getElementById('screenLobby');
+    const screenGame = document.getElementById('screenGame');
+    const screenWinner = document.getElementById('screenWinner');
+    const screenLocked = document.getElementById('screenLocked');
+    const userBadge = document.getElementById('userBadge');
+    const userBadgeName = document.getElementById('userBadgeName');
+    const adminPanelBtn = document.getElementById('adminPanelBtn');
+
+    const tabSignIn = document.getElementById('tabSignIn');
+    const tabSignUp = document.getElementById('tabSignUp');
+    const usernameWrapper = document.getElementById('usernameWrapper');
+    const submitAuthBtn = document.getElementById('submitAuthBtn');
+    const authError = document.getElementById('authError');
+
+    const passwordInput = document.getElementById('passwordInput');
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const eyeIconShow = document.getElementById('eyeIconShow');
+    const eyeIconHide = document.getElementById('eyeIconHide');
+    const passwordValidationWrapper = document.getElementById('passwordValidationWrapper');
+    const strengthBar = document.getElementById('strengthBar');
+    const ruleLength = document.getElementById('ruleLength');
+    const ruleNumber = document.getElementById('ruleNumber');
+
+    togglePasswordBtn.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      eyeIconShow.classList.toggle('hidden', isPassword);
+      eyeIconHide.classList.toggle('hidden', !isPassword);
+    });
+
+    passwordInput.addEventListener('input', () => {
+      const val = passwordInput.value;
+      if (mode === 'SIGN_UP' && val.length > 0) {
+        passwordValidationWrapper.classList.remove('hidden');
+      } else {
+        passwordValidationWrapper.classList.add('hidden');
+      }
+
+      const hasLength = val.length >= 6;
+      const hasNumOrSymbol = /[0-9!@#$%^&*(),.?":{}|<>]/.test(val);
+
+      updateRuleUI(ruleLength, hasLength);
+      updateRuleUI(ruleNumber, hasNumOrSymbol);
+
+      let score = 0;
+      if (hasLength) score += 50;
+      if (hasNumOrSymbol) score += 50;
+
+      strengthBar.style.width = score + '%';
+      if (score < 50) strengthBar.className = 'h-full bg-red-500 transition-all duration-300';
+      else if (score < 100) strengthBar.className = 'h-full bg-amber-500 transition-all duration-300';
+      else strengthBar.className = 'h-full bg-emerald-500 transition-all duration-300';
+    });
+
+    function updateRuleUI(elem, isValid) {
+      const icon = elem.querySelector('.rule-icon');
+      if (isValid) {
+        icon.innerText = '✅';
+        elem.classList.remove('text-gray-400');
+        elem.classList.add('text-emerald-400');
+      } else {
+        icon.innerText = '❌';
+        elem.classList.remove('text-emerald-400');
+        elem.classList.add('text-gray-400');
+      }
+    }
+
+    tabSignIn.addEventListener('click', () => {
+      mode = 'SIGN_IN';
+      tabSignIn.className = 'py-2.5 rounded-lg bg-red-600 text-white shadow';
+      tabSignUp.className = 'py-2.5 rounded-lg text-gray-400 hover:text-white';
+      usernameWrapper.classList.add('hidden');
+      passwordValidationWrapper.classList.add('hidden');
+      submitAuthBtn.innerText = 'SIGN IN TO PLAY';
+      authError.classList.add('hidden');
+    });
+
+    tabSignUp.addEventListener('click', () => {
+      mode = 'SIGN_UP';
+      tabSignUp.className = 'py-2.5 rounded-lg bg-red-600 text-white shadow';
+      tabSignIn.className = 'py-2.5 rounded-lg text-gray-400 hover:text-white';
+      usernameWrapper.classList.remove('hidden');
+      if (passwordInput.value.length > 0) passwordValidationWrapper.classList.remove('hidden');
+      submitAuthBtn.innerText = 'CREATE ACCOUNT & PLAY';
+      authError.classList.add('hidden');
+    });
+
+    async function checkAuthSession() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session && session.user) {
+        currentUser = session.user;
+        onUserAuthenticated();
+      } else {
+        showScreen(screenAuth);
+      }
+    }
+
+    function onUserAuthenticated() {
+      const name = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'Player';
+      userBadgeName.innerText = name;
+      userBadge.classList.remove('hidden');
+
+      if (currentUser.email === 'shimri86@gmail.com') {
+        adminPanelBtn.classList.remove('hidden');
+      } else {
+        adminPanelBtn.classList.add('hidden');
+      }
+
+      socket.emit('joinLobby', { name, userId: currentUser.id });
+      showScreen(screenLobby);
+    }
+
+    checkAuthSession();
+
+    submitAuthBtn.addEventListener('click', async () => {
+      const email = document.getElementById('emailInput').value.trim();
+      const password = passwordInput.value.trim();
+      const username = document.getElementById('usernameInput').value.trim() || email.split('@')[0];
+
+      if (!email || !password) {
+        authError.innerText = 'Please enter your email and password.';
+        authError.classList.remove('hidden');
+        return;
+      }
+
+      if (mode === 'SIGN_UP') {
+        if (password.length < 6) {
+          authError.innerText = 'Password must be at least 6 characters long.';
+          authError.classList.remove('hidden');
+          return;
+        }
+
+        const { data, error } = await supabaseClient.auth.signUp({
+          email, password, options: { data: { username } }
+        });
+        if (error) {
+          authError.innerText = error.message;
+          authError.classList.remove('hidden');
+        } else if (data.user) {
+          currentUser = data.user;
+          onUserAuthenticated();
+        }
+      } else {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          authError.innerText = error.message;
+          authError.classList.remove('hidden');
+        } else if (data.user) {
+          currentUser = data.user;
+          onUserAuthenticated();
+        }
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await supabaseClient.auth.signOut();
+      currentUser = null;
+      userBadge.classList.add('hidden');
+      adminPanelBtn.classList.add('hidden');
+      location.reload();
+    });
+
+    function showScreen(screen) {
+      [screenAuth, screenLobby, screenGame, screenWinner, screenLocked].forEach(s => s.classList.add('hidden'));
+      screen.classList.remove('hidden');
+    }
+
+    socket.on('connect', () => { myId = socket.id; });
+    socket.on('gameStateUpdate', (state) => { gameState = state; updateUI(); });
+    socket.on('leaderChanged', () => { playStealSound(); });
+    socket.on('accountLocked', (data) => {
+      document.getElementById('lockReasonText').innerText = 'Reason: ' + (data.reason || 'Security Violation');
+      showScreen(screenLocked);
+    });
+
+    socket.on('gameEnded', (data) => {
+      const isWinner = data.winnerId === myId;
+      const winner = data.winnerId && gameState?.players[data.winnerId];
+      if (isWinner) {
+        document.getElementById('winnerText').innerText = 'YOU WON! 🏆';
+        playWinSound();
+        if (window.confetti) {
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+      } else if (winner) {
+        document.getElementById('winnerText').innerText = winner.name + ' WINS!';
+      } else {
+        document.getElementById('winnerText').innerText = 'NOBODY WON';
+      }
+      showScreen(screenWinner);
+    });
+
+    function updateUI() {
+      if (!gameState) return;
+
+      const players = Object.values(gameState.players);
+      const isLeader = gameState.leaderId === myId;
+      const currentLeader = gameState.leaderId ? gameState.players[gameState.leaderId] : null;
+
+      if (currentLeader) {
+        document.getElementById('leaderName').innerText = isLeader ? 'YOU HOLD THE CROWN 👑' : currentLeader.name.toUpperCase();
+      } else {
+        document.getElementById('leaderName').innerText = 'NO LEADER';
+      }
+
+      document.getElementById('playerCount').innerText = `${players.length} / ${gameState.minPlayers}`;
+      document.getElementById('playerList').innerHTML = players.map(p => `
+        <li class="py-1.5 px-3 rounded-xl bg-black/30 border border-white/5 flex justify-between items-center ${p.id === myId ? 'text-red-400 font-bold border-red-500/40' : 'text-gray-300'}">
+          <span>${p.name} ${p.id === myId ? '(You)' : ''}</span>
+          ${gameState.leaderId === p.id ? '<span class="text-amber-400">👑</span>' : ''}
+        </li>
+      `).join('');
+
+      if (screenWinner.classList.contains('hidden') && screenLocked.classList.contains('hidden')) {
+        if (gameState.status === 'LOBBY') showScreen(screenLobby);
+        else if (gameState.status === 'PLAYING') showScreen(screenGame);
+      }
+
+      const timerText = document.getElementById('timerText');
+      const timerContainer = document.getElementById('timerContainer');
+      timerText.innerText = gameState.timerValue;
+
+      if (gameState.timerValue <= 5) {
+        timerContainer.classList.add('animate-danger', 'border-red-500', 'glow-red');
+        timerText.classList.add('text-red-500');
+        if (gameState.status === 'PLAYING') playBeep(440, 'sine', 0.05);
+      } else {
+        timerContainer.classList.remove('animate-danger', 'border-red-500', 'glow-red');
+        timerText.classList.remove('text-red-500');
+      }
+
+      const actionBtn = document.getElementById('actionBtn');
+      if (isLeader) {
+        actionBtn.innerText = 'YOU ARE LEADING 👑';
+        actionBtn.className = 'w-full bg-gradient-to-r from-amber-500 to-yellow-400 font-black text-2xl tracking-wider py-6 rounded-3xl shadow-2xl glow-gold text-black';
+      } else if (Date.now() < cooldownUntil) {
+        // Cooldown active
+      } else {
+        actionBtn.innerText = 'TAKE CROWN';
+        actionBtn.disabled = false;
+        actionBtn.className = 'w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 font-black text-2xl tracking-wider py-6 rounded-3xl shadow-2xl active:scale-95 glow-red text-white';
+      }
+    }
+
+    document.getElementById('actionBtn').addEventListener('click', () => {
+      if (Date.now() < cooldownUntil) return;
+      socket.emit('pressButton');
+
+      cooldownUntil = Date.now() + 2000;
+      const actionBtn = document.getElementById('actionBtn');
+      actionBtn.disabled = true;
+      actionBtn.className = 'w-full bg-gray-800 text-gray-500 font-black text-xl tracking-wider py-6 rounded-3xl cursor-not-allowed';
+
+      clearInterval(cooldownTimer);
+      cooldownTimer = setInterval(() => {
+        const remaining = ((cooldownUntil - Date.now()) / 1000).toFixed(1);
+        if (remaining <= 0) {
+          clearInterval(cooldownTimer);
+          updateUI();
+        } else {
+          actionBtn.innerText = `COOLDOWN ${remaining}s`;
+        }
+      }, 100);
+    });
+
+    // Leaderboard Modal
+    const leaderboardBtn = document.getElementById('leaderboardBtn');
+    const leaderboardModal = document.getElementById('leaderboardModal');
+    const closeModal = document.getElementById('closeModal');
+    const leaderboardRows = document.getElementById('leaderboardRows');
+
+    leaderboardBtn.addEventListener('click', async () => {
+      leaderboardModal.classList.remove('hidden');
+      const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('username, wins, total_taps, games_played')
+        .order('wins', { ascending: false })
+        .limit(10);
+
+      if (error || !data || data.length === 0) {
+        leaderboardRows.innerHTML = '<p class="text-gray-500 text-center py-4">No wins recorded yet.</p>';
+      } else {
+        leaderboardRows.innerHTML = data.map((row, idx) => `
+          <div class="flex justify-between items-center bg-black/40 px-4 py-3 rounded-xl border border-gray-800">
+            <div>
+              <span class="font-bold text-gray-200">#${idx + 1} ${row.username}</span>
+              <span class="text-xs text-gray-500 block">${row.total_taps || 0} taps • ${row.games_played || 0} matches</span>
+            </div>
+            <span class="font-black text-amber-400 text-lg">${row.wins} WINS</span>
+          </div>
+        `).join('');
+      }
+    });
+
+    closeModal.addEventListener('click', () => leaderboardModal.classList.add('hidden'));
+
+    // ADMIN DASHBOARD LOGIC
+    const adminModal = document.getElementById('adminModal');
+    const closeAdminModal = document.getElementById('closeAdminModal');
+    const saveAdminSettingsBtn = document.getElementById('saveAdminSettingsBtn');
+    const adminStatusMsg = document.getElementById('adminStatusMsg');
+
+    adminPanelBtn.addEventListener('click', () => adminModal.classList.remove('hidden'));
+    closeAdminModal.addEventListener('click', () => adminModal.classList.add('hidden'));
+
+    saveAdminSettingsBtn.addEventListener('click', () => {
+      if (!currentUser || currentUser.email !== 'shimri86@gmail.com') return;
+
+      const timerDurationSec = Number(document.getElementById('adminTimerInput').value);
+      const cooldownMs = Number(document.getElementById('adminCooldownInput').value);
+      const minPlayers = Number(document.getElementById('adminMinPlayersInput').value);
+
+      socket.emit('updateGameConfig', {
+        userEmail: currentUser.email,
+        timerDurationSec,
+        cooldownMs,
+        minPlayers
+      });
+
+      adminStatusMsg.innerText = 'Saving & broadcasting settings...';
+      adminStatusMsg.className = 'text-xs text-center font-bold text-amber-400';
+      adminStatusMsg.classList.remove('hidden');
+    });
+
+    socket.on('adminSuccess', (data) => {
+      adminStatusMsg.innerText = '✅ Settings saved & applied live to all players!';
+      adminStatusMsg.className = 'text-xs text-center font-bold text-emerald-400';
+    });
+
+    socket.on('adminError', (data) => {
+      adminStatusMsg.innerText = '❌ ' + (data.message || 'Error updating settings');
+      adminStatusMsg.className = 'text-xs text-center font-bold text-red-400';
+    });
+  </script>
+</body>
+</html>

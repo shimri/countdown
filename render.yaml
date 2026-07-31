@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: countdown-game-server
+    env: node
+    buildCommand: cd server && npm install && npm run build
+    startCommand: cd server && npm start
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: SUPABASE_URL
+        value: https://ughcjatkftijiwlcukkn.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnaGNqYXRrZnRpaml3bGN1a2tuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0ODk5MDksImV4cCI6MjEwMTA2NTkwOX0.kXDvuaZeLndvIToabAltAFSBIDiEX3MgPv-M4A8sHhw
