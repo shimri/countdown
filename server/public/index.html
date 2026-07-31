@@ -36,26 +36,34 @@
 </head>
 <body class="min-h-screen text-white flex flex-col justify-between items-center p-4 select-none overflow-x-hidden">
 
-  <!-- TOP HEADER -->
-  <header class="w-full max-w-md text-center pt-3">
-    <div class="flex justify-between items-center mb-3">
-      <div class="flex items-center gap-2">
-        <span class="text-2xl crown-bounce">👑</span>
-        <h1 class="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-amber-400 to-amber-200">
-          COUNTDOWN
-        </h1>
-      </div>
-      
-      <div class="flex items-center gap-2">
-        <button id="adminPanelBtn" class="hidden text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 px-3 py-1.5 rounded-full font-bold hover:bg-amber-500/30 transition">
-          ⚙️ Admin Panel
-        </button>
-        <div id="userBadge" class="hidden text-xs bg-black/50 border border-gray-800 px-3 py-1.5 rounded-full flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span id="userBadgeName" class="font-bold text-gray-300"></span>
-          <button id="editNicknameBtn" title="Edit Nickname" class="text-amber-400 hover:text-amber-300 font-bold ml-1 text-xs">✏️</button>
-          <button id="logoutBtn" class="text-gray-500 hover:text-red-400 ml-1 text-xs font-semibold">Exit</button>
+  <!-- TOP RESPONSIVE HEADER -->
+  <header class="w-full max-w-md text-center pt-2">
+    <div class="flex flex-col gap-2 mb-3">
+      <!-- Top Row: Logo + User Controls -->
+      <div class="flex justify-between items-center w-full">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl crown-bounce">👑</span>
+          <h1 class="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-amber-400 to-amber-200">
+            COUNTDOWN
+          </h1>
         </div>
+
+        <!-- User Badge & Sign Out Button -->
+        <div id="userBadge" class="hidden text-xs bg-black/60 border border-gray-800 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-md">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="userBadgeName" class="font-bold text-gray-200 max-w-[90px] truncate"></span>
+          <button id="editNicknameBtn" title="Edit Nickname" class="text-amber-400 hover:text-amber-300 font-bold px-1 text-xs">✏️</button>
+          <button id="logoutBtn" class="bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition ml-1">
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Panel Button (Dedicated Sub-Bar so it NEVER blocks Sign Out on mobile) -->
+      <div class="w-full flex justify-end">
+        <button id="adminPanelBtn" class="hidden text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 px-3 py-1 rounded-full font-bold hover:bg-amber-500/30 transition">
+          ⚙️ Admin Dashboard
+        </button>
       </div>
     </div>
 
@@ -393,7 +401,6 @@
       }
     }
 
-    // SIGN IN TAB: Hide Nickname box (Nickname is loaded automatically from profile)
     tabSignIn.addEventListener('click', () => {
       mode = 'SIGN_IN';
       tabSignIn.className = 'py-2.5 rounded-lg bg-red-600 text-white shadow';
@@ -404,7 +411,6 @@
       authError.classList.add('hidden');
     });
 
-    // SIGN UP TAB: Show Choose Display Nickname box
     tabSignUp.addEventListener('click', () => {
       mode = 'SIGN_UP';
       tabSignUp.className = 'py-2.5 rounded-lg bg-red-600 text-white shadow';
@@ -627,7 +633,6 @@
           onUserAuthenticated();
         }
       } else {
-        // SIGN IN: Only requires Email and Password. Nickname is loaded automatically!
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
           authError.innerText = error.message;
